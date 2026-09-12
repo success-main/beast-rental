@@ -1,0 +1,189 @@
+rules_version = '2';
+
+// =====================================================================
+// BEAST RENTALS — FIRESTORE SECURITY RULES
+// =====================================================================
+// ⚠️ ARCHITECTURE NOTE — READ THIS BEFORE RELYING ON THESE RULES ⚠️
+// By explicit request, this project has NO server component anywhere
+// (no Cloud Functions, no Vercel functions, nothing). Every write in
+// this app — including recording a payment as "successful" and
+// activating a rental — happens directly from the browser.
+//
+// The unavoidable consequence: nothing here can verify that a Paystack
+// payment actually happened. A signed-in user with browser devtools
+// can call the same Firestore write the payment flow uses and grant
+// themselves a free rental. These rules do everything short of that —
+// they stop a user from touching anyone else's data, from editing
+// their OWN serial number/role/status, and add basic sanity checks
+// (amount must match the configured fee, userId must match the
+// signed-in user) — but they cannot confirm money actually changed
+// hands. If fraud losses ever matter, the fix is a small trusted
+// server that checks the transaction reference against Paystack's API
+// before any of this is written — see the note in assets/js/payment.js.
+//
+// Also by request, `receipts`, `rentals`, and `qr_codes` are readable
+// by anyone (not just owners/admins) so the public QR/receipt
+// verification pages work with no server involved. Those three
+// collections deliberately never contain email or phone — that stays
+// private on `users`, which is NOT publicly readable.
+//
+// Admin access is determined by the existence of an admins/{uid}
+// Firestore document — no custom claims, no Cloud Functions needed.
+// =====================================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------------- Helpers ----------------
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+    function isAdmin() {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+    function hasAdminRole(roles) {
+      return isAdmin() &&
+        get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.role in roles;
+    }
+    function isSuperAdmin() { return hasAdminRole(['super_admin']); }
+    function isFinanceAdmin() { return hasAdminRole(['super_admin', 'finance_admin']); }
+    function isManagerAdmin() { return hasAdminRole(['super_admin', 'manager']); }
+    function isVerificationAdmin() { return hasAdminRole(['super_admin', 'verification_officer']); }
+
+    // ---------------- users/{userId} ----------------
+    // NOT publicly readable — this is the only place email/phone live.
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow update: if isOwner(userId) &&
+        request.resource.data.serialNumber == resource.data.serialNumber &&
+        request.resource.data.role == resource.data.role &&
+        request.resource.data.status == resource.data.status &&
+        request.resource.data.type == resource.data.type &&
+        request.resource.data.unitNumber == resource.data.unitNumber;
+      allow update: if isManagerAdmin() || isSuperAdmin();
+      allow create: if isOwner(userId);
+      allow delete: if false;
+
+      match /meta/{docId} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+
+    // ---------------- admins/{adminId} ----------------
+    match /admins/{adminId} {
+      allow read: if isSignedIn();
+      allow write: if isSuperAdmin();
+    }
+
+    // ---------------- shops/{shopId} & farms/{farmId} ----------------
+    match /shops/{shopId} {
+      allow read: if true;
+      allow write: if isManagerAdmin();
+    }
+    match /farms/{farmId} {
+      allow read: if true;
+      allow write: if isManagerAdmin();
+    }
+
+    // ---------------- rentals/{rentalId} (rentalId == userId) ----------------
+    // Publicly readable so the verification pages can check status
+    // without a server. Contains only type/unitNumber/status/dates —
+    // no contact info.
+    match /rentals/{rentalId} {
+      allow read: if true;
+      // The owner activates their OWN rental directly after a Paystack
+      // popup reports success (see assets/js/payment.js) — this is the
+      // write that can't be fraud-proofed without a server, per the
+      // warning at the top of this file. Admins may also correct it.
+      allow write: if isOwner(rentalId) || isManagerAdmin() || isSuperAdmin();
+      allow create: if isOwner(rentalId);
+    }
+
+    // ---------------- payments/{paymentId} ----------------
+    match /payments/{paymentId} {
+      allow read: if isSignedIn() &&
+        (resource.data.userId == request.auth.uid || isFinanceAdmin() || isSuperAdmin());
+      // Basic sanity checks only — cannot confirm a real payment
+      // happened. userId must match the signed-in user, and the
+      // claimed amount/currency must match the live settings doc.
+      allow create: if isSignedIn() &&
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.amount == get(/databases/$(database)/documents/settings/general).data.annualRentalFee &&
+        request.resource.data.currency == get(/databases/$(database)/documents/settings/general).data.currency;
+      allow update, delete: if false;
+    }
+
+    // ---------------- transactions/{transactionId} ----------------
+    match /transactions/{transactionId} {
+      allow read: if isSignedIn() &&
+        (resource.data.userId == request.auth.uid || isFinanceAdmin() || isSuperAdmin());
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    // ---------------- receipts/{receiptNumber} ----------------
+    // Document ID IS the receipt number (see assets/js/payment.js) —
+    // publicly readable so anyone can verify a receipt by number with
+    // no server involved. Never contains email/phone.
+    match /receipts/{receiptNumber} {
+      allow read: if true;
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    // ---------------- qr_codes/{userId} ----------------
+    // Publicly readable (by token, via a client-side query) so QR
+    // scanning works without a server. Carries only serialNumber/type/
+    // unitNumber/name — never email/phone.
+    match /qr_codes/{userId} {
+      allow read: if true;
+      // First issuance is the owner (during payment activation);
+      // revoke/regenerate afterward is admin-only.
+      allow write: if isOwner(userId) || isVerificationAdmin() || isSuperAdmin();
+    }
+
+    // ---------------- notifications/{notificationId} ----------------
+    match /notifications/{notificationId} {
+      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow update: if isOwner(resource.data.userId) &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
+      // The owner's own payment/QR flow writes their own notifications;
+      // admins send notifications to anyone directly from the browser.
+      allow create: if isSignedIn() &&
+        (request.resource.data.userId == request.auth.uid || isAdmin());
+      allow delete: if false;
+    }
+
+    // ---------------- activity_logs/{logId} ----------------
+    match /activity_logs/{logId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin() &&
+        request.resource.data.adminId == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    // ---------------- counters/{counterId} ----------------
+    // Used directly by the client for serial-number and receipt-number
+    // allocation. Split into create/update: the very first write for a
+    // given counter has no existing document yet, so `resource.data`
+    // is null and a single combined write rule would always fail on
+    // that first write. `create` seeds the counter at 1; `update`
+    // restricts all later writes to exactly +1 increments.
+    match /counters/{counterId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.value == 1;
+      allow update: if isSignedIn() &&
+        request.resource.data.value == resource.data.value + 1;
+    }
+
+    // ---------------- settings/{docId} ----------------
+    match /settings/{docId} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+  }
+}

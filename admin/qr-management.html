@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QR Management — Beast Rentals Admin</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="../assets/css/style.css">
+<link rel="stylesheet" href="../assets/css/admin.css">
+<link rel="stylesheet" href="../assets/css/responsive.css">
+</head>
+<body>
+
+<div id="page-loader" class="page-loader"><span class="brand-mark"><i class="fa-solid fa-shield-dog"></i></span><span class="spinner dark"></span></div>
+
+<div class="app-shell hidden" id="app-shell">
+  <aside class="app-sidebar">
+    <a href="../index.html" class="brand"><span class="brand-mark"><i class="fa-solid fa-shield-dog"></i></span>Beast Rentals</a>
+    <a href="dashboard.html" class="side-link"><i class="fa-solid fa-gauge"></i> Dashboard</a>
+    <a href="users.html" class="side-link"><i class="fa-solid fa-users"></i> Users</a>
+    <a href="shops.html" class="side-link"><i class="fa-solid fa-store"></i> Shops</a>
+    <a href="farms.html" class="side-link"><i class="fa-solid fa-tractor"></i> Farms</a>
+    <a href="rentals.html" class="side-link"><i class="fa-solid fa-house-chimney"></i> Rentals</a>
+    <a href="payments.html" class="side-link"><i class="fa-solid fa-credit-card"></i> Payments</a>
+    <a href="transactions.html" class="side-link"><i class="fa-solid fa-clock-rotate-left"></i> Transactions</a>
+    <a href="receipts.html" class="side-link"><i class="fa-solid fa-receipt"></i> Receipts</a>
+    <a href="qr-management.html" class="side-link active"><i class="fa-solid fa-qrcode"></i> QR Management</a>
+    <a href="qr-scanner.html" class="side-link"><i class="fa-solid fa-camera"></i> QR Scanner</a>
+    <a href="notifications.html" class="side-link"><i class="fa-solid fa-bell"></i> Notifications</a>
+    <a href="reports.html" class="side-link"><i class="fa-solid fa-chart-line"></i> Reports</a>
+    <div class="side-section-label">System</div>
+    <a href="activity-logs.html" class="side-link"><i class="fa-solid fa-list-check"></i> Activity Logs</a>
+    <a href="administrators.html" class="side-link"><i class="fa-solid fa-user-shield"></i> Administrators</a>
+    <a href="settings.html" class="side-link"><i class="fa-solid fa-gear"></i> Settings</a>
+    <a href="#" id="logout-link" class="side-link"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+  </aside>
+
+  <main class="app-main">
+    <div class="app-topbar">
+      <div style="display:flex; align-items:center; gap:14px;"><button class="mobile-menu-btn btn-icon"><i class="fa-solid fa-bars"></i></button><span class="page-title">QR Management</span></div>
+      <div class="topbar-actions"><div class="avatar" id="avatar-initials">--</div></div>
+    </div>
+
+    <div class="app-content">
+      <div class="panel">
+        <div class="toolbar">
+          <div class="search-box"><i class="fa-solid fa-magnifying-glass"></i><input type="text" id="search-input" placeholder="Search by serial or name..."></div>
+          <select id="status-filter"><option value="">All</option><option value="active">Active</option><option value="revoked">Revoked</option></select>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Serial</th><th>Name</th><th>Token</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="tbody"><tr><td colspan="5" style="text-align:center; padding:30px;"><span class="spinner dark"></span></td></tr></tbody>
+          </table>
+        </div>
+        <div id="empty-state" class="empty-state hidden"><i class="fa-solid fa-qrcode"></i><h4>No QR records found.</h4></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="modal-overlay" id="qr-view-modal">
+  <div class="modal-box" style="text-align:center;">
+    <div class="modal-head"><h3>QR Code</h3><button class="modal-close" data-close-modal="qr-view-modal">&times;</button></div>
+    <div id="qr-view-canvas"></div>
+    <p style="margin-top:10px; font-family:monospace; font-size:0.8rem;" id="qr-view-token"></p>
+  </div>
+</div>
+
+<script type="module">
+  import { requireAdmin, logoutUser } from "../assets/js/auth.js";
+  import { listQrCodes, listUsers, revokeQr, regenerateQr } from "../assets/js/admin.js";
+  import { renderQrCode } from "../assets/js/qr.js";
+
+  document.getElementById("logout-link").addEventListener("click", (e) => { e.preventDefault(); logoutUser(); });
+
+  let allQr = [], userMap = {};
+
+  requireAdmin(async (user, adminData) => {
+    document.getElementById("page-loader").classList.add("hidden");
+    document.getElementById("app-shell").classList.remove("hidden");
+    document.getElementById("avatar-initials").textContent = getInitials(adminData?.name || user.email);
+    await loadAll();
+  });
+
+  async function loadAll() {
+    const [qr, users] = await Promise.all([listQrCodes(), listUsers()]);
+    allQr = qr;
+    users.forEach(u => { userMap[u.id] = u; });
+    render();
+  }
+
+  function render() {
+    const term = document.getElementById("search-input").value.trim().toLowerCase();
+    const statusFilter = document.getElementById("status-filter").value;
+
+    const filtered = allQr.filter(q => {
+      const u = userMap[q.id] || {};
+      const matchesTerm = !term || (u.serialNumber || "").toLowerCase().includes(term) || (u.name || "").toLowerCase().includes(term);
+      const matchesStatus = !statusFilter || (q.status || "active") === statusFilter;
+      return matchesTerm && matchesStatus;
+    });
+
+    const tbody = document.getElementById("tbody");
+    const empty = document.getElementById("empty-state");
+    if (!filtered.length) { tbody.innerHTML = ""; empty.classList.remove("hidden"); return; }
+    empty.classList.add("hidden");
+
+    tbody.innerHTML = filtered.map(q => {
+      const u = userMap[q.id] || {};
+      const isRevoked = q.status === "revoked";
+      return `
+      <tr>
+        <td style="font-family:monospace;">${u.serialNumber || "—"}</td>
+        <td>${u.name || "—"}</td>
+        <td style="font-family:monospace; font-size:0.78rem;">${(q.token || "").slice(0, 14)}...</td>
+        <td>${isRevoked ? '<span class="badge badge-red">REVOKED</span>' : '<span class="badge badge-green">ACTIVE</span>'}</td>
+        <td class="table-actions">
+          <button class="btn btn-sm btn-outline view-btn" data-id="${q.id}">View</button>
+          ${isRevoked
+            ? `<button class="btn btn-sm btn-primary regen-btn" data-id="${q.id}">Regenerate</button>`
+            : `<button class="btn btn-sm btn-danger revoke-btn" data-id="${q.id}">Revoke</button>`}
+        </td>
+      </tr>`;
+    }).join("");
+
+    document.querySelectorAll(".view-btn").forEach(b => b.addEventListener("click", async () => {
+      const q = allQr.find(x => x.id === b.dataset.id);
+      document.getElementById("qr-view-token").textContent = q.token;
+      openModal("qr-view-modal");
+      await renderQrCode("qr-view-canvas", q.token);
+    }));
+    document.querySelectorAll(".revoke-btn").forEach(b => b.addEventListener("click", async () => {
+      if (!confirm("Revoke this QR code? The user's current QR will stop verifying immediately.")) return;
+      try { await revokeQr(b.dataset.id); showToast("QR revoked.", "success"); await loadAll(); }
+      catch { showToast("Could not revoke QR.", "error"); }
+    }));
+    document.querySelectorAll(".regen-btn").forEach(b => b.addEventListener("click", async () => {
+      try { await regenerateQr(b.dataset.id); showToast("New QR generated.", "success"); await loadAll(); }
+      catch { showToast("Could not regenerate QR.", "error"); }
+    }));
+  }
+
+  document.getElementById("search-input").addEventListener("input", render);
+  document.getElementById("status-filter").addEventListener("change", render);
+</script>
+<script src="../assets/js/utils.js"></script>
+</body>
+</html>

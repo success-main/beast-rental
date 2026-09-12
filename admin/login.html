@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Administrator Login — Beast Rentals</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="../assets/css/style.css">
+<link rel="stylesheet" href="../assets/css/auth.css">
+<link rel="stylesheet" href="../assets/css/responsive.css">
+</head>
+<body>
+
+<div class="auth-shell">
+  <div class="auth-visual" style="background: linear-gradient(160deg, rgba(6,33,15,0.92), rgba(0,0,0,0.95)), url('https://images.unsplash.com/photo-1756227584303-f1400daaa69d?auto=format&fit=crop&w=1200&q=70') center/cover no-repeat;">
+    <div class="content">
+      <a href="../index.html" class="brand" style="color:#fff;"><span class="brand-mark"><i class="fa-solid fa-user-shield"></i></span>Beast Rentals</a>
+      <h2 style="margin-top:26px; color:#fff;">Administrator Access</h2>
+      <p style="color:var(--br-gray-300); margin-top:10px;">This portal is restricted to authorized Beast Rentals administrators only. All access is logged.</p>
+      <ul>
+        <li><i class="fa-solid fa-circle-check"></i> Role-based permissions</li>
+        <li><i class="fa-solid fa-circle-check"></i> Server-enforced authorization</li>
+        <li><i class="fa-solid fa-circle-check"></i> Full activity logging</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="auth-form-wrap">
+    <div class="auth-box">
+      <a href="../index.html" class="brand"><span class="brand-mark"><i class="fa-solid fa-user-shield"></i></span>Beast Rentals</a>
+      <h2>Administrator Login</h2>
+      <p class="sub">Sign in with your administrator credentials.</p>
+
+      <div id="alert-slot"></div>
+
+      <form id="admin-login-form">
+        <div class="form-group">
+          <label for="email">Admin Email</label>
+          <div class="input-wrap has-icon">
+            <i class="fa-solid fa-envelope leading"></i>
+            <input type="email" id="email" required placeholder="admin@beastrentals.example">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="password">Password</label>
+          <div class="input-wrap has-icon">
+            <i class="fa-solid fa-lock leading"></i>
+            <input type="password" id="password" required placeholder="••••••••">
+            <button type="button" class="toggle-pass" data-target="password"><i class="fa-solid fa-eye"></i></button>
+          </div>
+        </div>
+        <button type="submit" id="login-btn" class="btn btn-dark btn-block">
+          <span id="login-btn-label">Sign In</span>
+        </button>
+      </form>
+
+      <div class="form-footer-link"><a href="../login.html">← Back to user login</a></div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { loginUser } from "../assets/js/auth.js";
+  import { db } from "../assets/js/firebase-config.js";
+  import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import { signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { auth } from "../assets/js/firebase-config.js";
+
+  document.querySelectorAll(".toggle-pass").forEach(btnEl => {
+    btnEl.addEventListener("click", () => {
+      const target = document.getElementById(btnEl.dataset.target);
+      const show = target.type === "password";
+      target.type = show ? "text" : "password";
+      btnEl.querySelector("i").className = show ? "fa-solid fa-eye-slash" : "fa-solid fa-eye";
+    });
+  });
+
+  function setAlert(message, type = "error") {
+    document.getElementById("alert-slot").innerHTML = message
+      ? `<div class="alert alert-${type}"><i class="fa-solid fa-circle-${type === "error" ? "exclamation" : "info"}"></i><span>${message}</span></div>`
+      : "";
+  }
+
+  document.getElementById("admin-login-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    setAlert("");
+    const btn = document.getElementById("login-btn");
+    const label = document.getElementById("login-btn-label");
+    btn.disabled = true;
+    label.innerHTML = `<span class="spinner"></span> Signing in...`;
+
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+
+    try {
+      const user = await loginUser(email, password);
+      // UI-level gate only — real authorization is enforced by Firestore
+      // Security Rules / custom claims on every admin read & write.
+      const adminSnap = await getDoc(doc(db, "admins", user.uid));
+      if (!adminSnap.exists()) {
+        await signOut(auth);
+        setAlert("You are not authorized to access the admin portal.");
+        btn.disabled = false; label.textContent = "Sign In";
+        return;
+      }
+      window.location.href = "dashboard.html";
+    } catch (err) {
+      setAlert("Invalid login details.");
+      btn.disabled = false; label.textContent = "Sign In";
+    }
+  });
+</script>
+<script src="../assets/js/utils.js"></script>
+</body>
+</html>

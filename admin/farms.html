@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Farms — Beast Rentals Admin</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="../assets/css/style.css">
+<link rel="stylesheet" href="../assets/css/admin.css">
+<link rel="stylesheet" href="../assets/css/responsive.css">
+</head>
+<body>
+
+<div id="page-loader" class="page-loader"><span class="brand-mark"><i class="fa-solid fa-shield-dog"></i></span><span class="spinner dark"></span></div>
+
+<div class="app-shell hidden" id="app-shell">
+  <aside class="app-sidebar">
+    <a href="../index.html" class="brand"><span class="brand-mark"><i class="fa-solid fa-shield-dog"></i></span>Beast Rentals</a>
+    <a href="dashboard.html" class="side-link"><i class="fa-solid fa-gauge"></i> Dashboard</a>
+    <a href="users.html" class="side-link"><i class="fa-solid fa-users"></i> Users</a>
+    <a href="shops.html" class="side-link"><i class="fa-solid fa-store"></i> Shops</a>
+    <a href="farms.html" class="side-link active"><i class="fa-solid fa-tractor"></i> Farms</a>
+    <a href="rentals.html" class="side-link"><i class="fa-solid fa-house-chimney"></i> Rentals</a>
+    <a href="payments.html" class="side-link"><i class="fa-solid fa-credit-card"></i> Payments</a>
+    <a href="transactions.html" class="side-link"><i class="fa-solid fa-clock-rotate-left"></i> Transactions</a>
+    <a href="receipts.html" class="side-link"><i class="fa-solid fa-receipt"></i> Receipts</a>
+    <a href="qr-management.html" class="side-link"><i class="fa-solid fa-qrcode"></i> QR Management</a>
+    <a href="qr-scanner.html" class="side-link"><i class="fa-solid fa-camera"></i> QR Scanner</a>
+    <a href="notifications.html" class="side-link"><i class="fa-solid fa-bell"></i> Notifications</a>
+    <a href="reports.html" class="side-link"><i class="fa-solid fa-chart-line"></i> Reports</a>
+    <div class="side-section-label">System</div>
+    <a href="activity-logs.html" class="side-link"><i class="fa-solid fa-list-check"></i> Activity Logs</a>
+    <a href="administrators.html" class="side-link"><i class="fa-solid fa-user-shield"></i> Administrators</a>
+    <a href="settings.html" class="side-link"><i class="fa-solid fa-gear"></i> Settings</a>
+    <a href="#" id="logout-link" class="side-link"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+  </aside>
+
+  <main class="app-main">
+    <div class="app-topbar">
+      <div style="display:flex; align-items:center; gap:14px;"><button class="mobile-menu-btn btn-icon"><i class="fa-solid fa-bars"></i></button><span class="page-title">Farms</span></div>
+      <div class="topbar-actions"><div class="avatar" id="avatar-initials">--</div></div>
+    </div>
+
+    <div class="app-content">
+      <div class="panel">
+        <div class="toolbar">
+          <div class="search-box"><i class="fa-solid fa-magnifying-glass"></i><input type="text" id="search-input" placeholder="Search farm number or tenant..."></div>
+          <select id="status-filter"><option value="">All</option><option value="occupied">Occupied</option><option value="available">Available</option></select>
+          <button class="btn btn-primary" id="add-farm-btn"><i class="fa-solid fa-plus"></i> Add Farm</button>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Farm Number</th><th>Tenant</th><th>Status</th><th>Payment Status</th><th>Expiry</th><th>Actions</th></tr></thead>
+            <tbody id="tbody"><tr><td colspan="6" style="text-align:center; padding:30px;"><span class="spinner dark"></span></td></tr></tbody>
+          </table>
+        </div>
+        <div id="empty-state" class="empty-state hidden"><i class="fa-solid fa-tractor"></i><h4>No farms added yet.</h4></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="modal-overlay" id="farm-modal">
+  <div class="modal-box">
+    <div class="modal-head"><h3 id="farm-modal-title">Add Farm</h3><button class="modal-close" data-close-modal="farm-modal">&times;</button></div>
+    <form id="farm-form">
+      <div class="form-group"><label>Farm Number</label><div class="input-wrap"><input type="text" id="farmNumber" required></div></div>
+      <div class="form-group"><label>Status</label><div class="input-wrap"><select id="farmStatus"><option value="available">Available</option><option value="occupied">Occupied</option><option value="deactivated">Deactivated</option></select></div></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-outline" data-close-modal="farm-modal">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Farm</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script type="module">
+  import { requireAdmin, logoutUser } from "../assets/js/auth.js";
+  import { listFarms, addFarm, updateFarm, listUsers, listRentals } from "../assets/js/admin.js";
+
+  document.getElementById("logout-link").addEventListener("click", (e) => { e.preventDefault(); logoutUser(); });
+
+  let allFarms = [], users = [], rentals = [];
+  let editingId = null;
+
+  requireAdmin(async (user, adminData) => {
+    document.getElementById("page-loader").classList.add("hidden");
+    document.getElementById("app-shell").classList.remove("hidden");
+    document.getElementById("avatar-initials").textContent = getInitials(adminData?.name || user.email);
+    await loadAll();
+  });
+
+  async function loadAll() {
+    [allFarms, users, rentals] = await Promise.all([listFarms(), listUsers(), listRentals()]);
+    render();
+  }
+
+  function tenantFor(farmNumber) {
+    const u = users.find(u => u.type === "FARM" && String(u.unitNumber) === String(farmNumber));
+    return u || null;
+  }
+  function rentalFor(userId) { return rentals.find(r => r.userId === userId || r.id === userId); }
+
+  function render() {
+    const term = document.getElementById("search-input").value.trim().toLowerCase();
+    const statusFilter = document.getElementById("status-filter").value;
+
+    let list = allFarms.filter(f => {
+      const tenant = tenantFor(f.farmNumber);
+      const matchesTerm = !term || String(f.farmNumber).toLowerCase().includes(term) || (tenant?.name || "").toLowerCase().includes(term);
+      const matchesStatus = !statusFilter || f.status === statusFilter;
+      return matchesTerm && matchesStatus;
+    });
+
+    const tbody = document.getElementById("tbody");
+    const empty = document.getElementById("empty-state");
+    if (!list.length) { tbody.innerHTML = ""; empty.classList.remove("hidden"); return; }
+    empty.classList.add("hidden");
+
+    tbody.innerHTML = list.map(f => {
+      const tenant = tenantFor(f.farmNumber);
+      const rental = tenant ? rentalFor(tenant.id) : null;
+      const paymentBadge = rental?.status === "active" || rental?.expiryDate ? `<span class="badge badge-green">PAID</span>` : `<span class="badge badge-gray">NONE</span>`;
+      const statusBadge = f.status === "occupied" ? `<span class="badge badge-green">OCCUPIED</span>` : f.status === "deactivated" ? `<span class="badge badge-red">DEACTIVATED</span>` : `<span class="badge badge-gray">AVAILABLE</span>`;
+      return `
+        <tr>
+          <td style="font-weight:700;">${f.farmNumber}</td>
+          <td>${tenant?.name || "—"}</td>
+          <td>${statusBadge}</td>
+          <td>${paymentBadge}</td>
+          <td>${rental?.expiryDate ? formatDate(rental.expiryDate) : "—"}</td>
+          <td class="table-actions">
+            <button class="btn btn-sm btn-outline edit-btn" data-id="${f.id}">Edit</button>
+            <button class="btn btn-sm btn-danger del-btn" data-id="${f.id}">Deactivate</button>
+          </td>
+        </tr>`;
+    }).join("");
+
+    document.querySelectorAll(".edit-btn").forEach(b => b.addEventListener("click", () => openEdit(b.dataset.id)));
+    document.querySelectorAll(".del-btn").forEach(b => b.addEventListener("click", () => deactivate(b.dataset.id)));
+  }
+
+  function openAdd() {
+    editingId = null;
+    document.getElementById("farm-modal-title").textContent = "Add Farm";
+    document.getElementById("farmNumber").value = "";
+    document.getElementById("farmStatus").value = "available";
+    openModal("farm-modal");
+  }
+  function openEdit(id) {
+    const f = allFarms.find(x => x.id === id);
+    if (!f) return;
+    editingId = id;
+    document.getElementById("farm-modal-title").textContent = "Edit Farm";
+    document.getElementById("farmNumber").value = f.farmNumber;
+    document.getElementById("farmStatus").value = f.status || "available";
+    openModal("farm-modal");
+  }
+  async function deactivate(id) {
+    try { await updateFarm(id, { status: "deactivated" }); showToast("Farm deactivated.", "success"); await loadAll(); }
+    catch { showToast("Could not update farm.", "error"); }
+  }
+
+  document.getElementById("add-farm-btn").addEventListener("click", openAdd);
+
+  document.getElementById("farm-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const farmNumber = document.getElementById("farmNumber").value.trim();
+    const status = document.getElementById("farmStatus").value;
+    try {
+      if (editingId) await updateFarm(editingId, { farmNumber, status });
+      else await addFarm({ farmNumber, status });
+      showToast("Farm saved.", "success");
+      closeModal("farm-modal");
+      await loadAll();
+    } catch { showToast("Could not save farm.", "error"); }
+  });
+
+  document.getElementById("search-input").addEventListener("input", render);
+  document.getElementById("status-filter").addEventListener("change", render);
+</script>
+<script src="../assets/js/utils.js"></script>
+</body>
+</html>

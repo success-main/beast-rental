@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Administrators — Beast Rentals Admin</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="../assets/css/style.css">
+<link rel="stylesheet" href="../assets/css/admin.css">
+<link rel="stylesheet" href="../assets/css/responsive.css">
+</head>
+<body>
+
+<div id="page-loader" class="page-loader"><span class="brand-mark"><i class="fa-solid fa-shield-dog"></i></span><span class="spinner dark"></span></div>
+
+<div class="app-shell hidden" id="app-shell">
+  <aside class="app-sidebar">
+    <a href="../index.html" class="brand"><span class="brand-mark"><i class="fa-solid fa-shield-dog"></i></span>Beast Rentals</a>
+    <a href="dashboard.html" class="side-link"><i class="fa-solid fa-gauge"></i> Dashboard</a>
+    <a href="users.html" class="side-link"><i class="fa-solid fa-users"></i> Users</a>
+    <a href="shops.html" class="side-link"><i class="fa-solid fa-store"></i> Shops</a>
+    <a href="farms.html" class="side-link"><i class="fa-solid fa-tractor"></i> Farms</a>
+    <a href="rentals.html" class="side-link"><i class="fa-solid fa-house-chimney"></i> Rentals</a>
+    <a href="payments.html" class="side-link"><i class="fa-solid fa-credit-card"></i> Payments</a>
+    <a href="transactions.html" class="side-link"><i class="fa-solid fa-clock-rotate-left"></i> Transactions</a>
+    <a href="receipts.html" class="side-link"><i class="fa-solid fa-receipt"></i> Receipts</a>
+    <a href="qr-management.html" class="side-link"><i class="fa-solid fa-qrcode"></i> QR Management</a>
+    <a href="qr-scanner.html" class="side-link"><i class="fa-solid fa-camera"></i> QR Scanner</a>
+    <a href="notifications.html" class="side-link"><i class="fa-solid fa-bell"></i> Notifications</a>
+    <a href="reports.html" class="side-link"><i class="fa-solid fa-chart-line"></i> Reports</a>
+    <div class="side-section-label">System</div>
+    <a href="activity-logs.html" class="side-link"><i class="fa-solid fa-list-check"></i> Activity Logs</a>
+    <a href="administrators.html" class="side-link active"><i class="fa-solid fa-user-shield"></i> Administrators</a>
+    <a href="settings.html" class="side-link"><i class="fa-solid fa-gear"></i> Settings</a>
+    <a href="#" id="logout-link" class="side-link"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+  </aside>
+
+  <main class="app-main">
+    <div class="app-topbar">
+      <div style="display:flex; align-items:center; gap:14px;"><button class="mobile-menu-btn btn-icon"><i class="fa-solid fa-bars"></i></button><span class="page-title">Administrators</span></div>
+      <div class="topbar-actions"><div class="avatar" id="avatar-initials">--</div></div>
+    </div>
+
+    <div class="app-content">
+      <div class="panel">
+        <div class="toolbar">
+          <div class="search-box"><i class="fa-solid fa-magnifying-glass"></i><input type="text" id="search-input" placeholder="Search by name or email..."></div>
+          <button class="btn btn-primary" id="invite-btn"><i class="fa-solid fa-user-plus"></i> Add Administrator</button>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Actions</th></tr></thead>
+            <tbody id="tbody"><tr><td colspan="4" style="text-align:center; padding:30px;"><span class="spinner dark"></span></td></tr></tbody>
+          </table>
+        </div>
+        <div id="empty-state" class="empty-state hidden"><i class="fa-solid fa-user-shield"></i><h4>No administrators found.</h4></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="modal-overlay" id="invite-modal">
+  <div class="modal-box">
+    <div class="modal-head"><h3>Add Administrator</h3><button class="modal-close" data-close-modal="invite-modal">&times;</button></div>
+    <form id="invite-form">
+      <div class="form-group">
+        <label>Firebase Auth UID</label>
+        <div class="input-wrap"><input type="text" id="invite-uid" required placeholder="e.g. 3fJk9pQ2..."></div>
+        <div class="field-hint">They must already have a Beast Rentals account. Find their UID in <strong>Firebase Console → Authentication → Users</strong> (search by email, copy the UID column).</div>
+      </div>
+      <div class="form-group"><label>Name</label><div class="input-wrap"><input type="text" id="invite-name" required placeholder="Full name"></div></div>
+      <div class="form-group"><label>Email Address</label><div class="input-wrap"><input type="email" id="invite-email" required placeholder="For your own reference"></div></div>
+      <div class="form-group">
+        <label>Role</label>
+        <div class="input-wrap">
+          <select id="invite-role">
+            <option value="super_admin">Super Admin — Full access</option>
+            <option value="finance_admin">Finance Admin — Payments, transactions, receipts, reports</option>
+            <option value="manager">Manager — Users, shops, farms, rentals</option>
+            <option value="verification_officer">Verification Officer — QR and rental verification</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-outline" data-close-modal="invite-modal">Cancel</button>
+        <button type="submit" class="btn btn-primary">Add Administrator</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script type="module">
+  import { requireAdmin, logoutUser } from "../assets/js/auth.js";
+  import { listAdministrators, addAdministratorByUid, updateAdministratorRole, removeAdministrator } from "../assets/js/admin.js";
+
+  document.getElementById("logout-link").addEventListener("click", (e) => { e.preventDefault(); logoutUser(); });
+
+  const roleClass = { super_admin: "role-badge-super", finance_admin: "role-badge-finance", manager: "role-badge-manager", verification_officer: "role-badge-verify" };
+  const roleLabel = { super_admin: "SUPER ADMIN", finance_admin: "FINANCE ADMIN", manager: "MANAGER", verification_officer: "VERIFICATION OFFICER" };
+
+  let allAdmins = [], myRole = null, myUid = null;
+
+  requireAdmin(async (user, adminData) => {
+    myUid = user.uid; myRole = adminData?.role;
+    document.getElementById("page-loader").classList.add("hidden");
+    document.getElementById("app-shell").classList.remove("hidden");
+    document.getElementById("avatar-initials").textContent = getInitials(adminData?.name || user.email);
+
+    if (myRole !== "super_admin") {
+      document.getElementById("invite-btn").classList.add("hidden");
+    }
+    await loadAll();
+  });
+
+  async function loadAll() {
+    allAdmins = await listAdministrators();
+    render();
+  }
+
+  function render() {
+    const term = document.getElementById("search-input").value.trim().toLowerCase();
+    const filtered = allAdmins.filter(a => !term || (a.name || "").toLowerCase().includes(term) || (a.email || "").toLowerCase().includes(term));
+
+    const tbody = document.getElementById("tbody");
+    const empty = document.getElementById("empty-state");
+    if (!filtered.length) { tbody.innerHTML = ""; empty.classList.remove("hidden"); return; }
+    empty.classList.add("hidden");
+
+    tbody.innerHTML = filtered.map(a => `
+      <tr>
+        <td>${a.name || "—"}</td>
+        <td>${a.email || "—"}</td>
+        <td><span class="role-chip ${roleClass[a.role] || ""}">${roleLabel[a.role] || a.role || "—"}</span></td>
+        <td class="table-actions">
+          ${myRole === "super_admin" && a.id !== myUid ? `<button class="btn btn-sm btn-danger remove-btn" data-id="${a.id}">Remove</button>` : ""}
+        </td>
+      </tr>
+    `).join("");
+
+    document.querySelectorAll(".remove-btn").forEach(b => b.addEventListener("click", async () => {
+      if (!confirm("Remove this administrator's access?")) return;
+      try { await removeAdministrator(b.dataset.id); showToast("Administrator removed.", "success"); await loadAll(); }
+      catch { showToast("Could not remove administrator.", "error"); }
+    }));
+  }
+
+  document.getElementById("invite-btn").addEventListener("click", () => openModal("invite-modal"));
+
+  document.getElementById("invite-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const uid = document.getElementById("invite-uid").value.trim();
+    const name = document.getElementById("invite-name").value.trim();
+    const email = document.getElementById("invite-email").value.trim();
+    const role = document.getElementById("invite-role").value;
+    try {
+      await addAdministratorByUid({ uid, name, email, role });
+      showToast("Administrator added.", "success");
+      closeModal("invite-modal");
+      await loadAll();
+    } catch (err) {
+      console.error("Add administrator failed:", err);
+      showToast(`Could not add administrator (${err.code || err.message || "unknown error"}).`, "error");
+    }
+  });
+
+  document.getElementById("search-input").addEventListener("input", render);
+</script>
+<script src="../assets/js/utils.js"></script>
+</body>
+</html>

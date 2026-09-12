@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QR Scanner — Beast Rentals Admin</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="../assets/css/style.css">
+<link rel="stylesheet" href="../assets/css/admin.css">
+<link rel="stylesheet" href="../assets/css/responsive.css">
+</head>
+<body>
+
+<div id="page-loader" class="page-loader"><span class="brand-mark"><i class="fa-solid fa-shield-dog"></i></span><span class="spinner dark"></span></div>
+
+<div class="app-shell hidden" id="app-shell">
+  <aside class="app-sidebar">
+    <a href="../index.html" class="brand"><span class="brand-mark"><i class="fa-solid fa-shield-dog"></i></span>Beast Rentals</a>
+    <a href="dashboard.html" class="side-link"><i class="fa-solid fa-gauge"></i> Dashboard</a>
+    <a href="users.html" class="side-link"><i class="fa-solid fa-users"></i> Users</a>
+    <a href="shops.html" class="side-link"><i class="fa-solid fa-store"></i> Shops</a>
+    <a href="farms.html" class="side-link"><i class="fa-solid fa-tractor"></i> Farms</a>
+    <a href="rentals.html" class="side-link"><i class="fa-solid fa-house-chimney"></i> Rentals</a>
+    <a href="payments.html" class="side-link"><i class="fa-solid fa-credit-card"></i> Payments</a>
+    <a href="transactions.html" class="side-link"><i class="fa-solid fa-clock-rotate-left"></i> Transactions</a>
+    <a href="receipts.html" class="side-link"><i class="fa-solid fa-receipt"></i> Receipts</a>
+    <a href="qr-management.html" class="side-link"><i class="fa-solid fa-qrcode"></i> QR Management</a>
+    <a href="qr-scanner.html" class="side-link active"><i class="fa-solid fa-camera"></i> QR Scanner</a>
+    <a href="notifications.html" class="side-link"><i class="fa-solid fa-bell"></i> Notifications</a>
+    <a href="reports.html" class="side-link"><i class="fa-solid fa-chart-line"></i> Reports</a>
+    <div class="side-section-label">System</div>
+    <a href="activity-logs.html" class="side-link"><i class="fa-solid fa-list-check"></i> Activity Logs</a>
+    <a href="administrators.html" class="side-link"><i class="fa-solid fa-user-shield"></i> Administrators</a>
+    <a href="settings.html" class="side-link"><i class="fa-solid fa-gear"></i> Settings</a>
+    <a href="#" id="logout-link" class="side-link"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+  </aside>
+
+  <main class="app-main">
+    <div class="app-topbar">
+      <div style="display:flex; align-items:center; gap:14px;"><button class="mobile-menu-btn btn-icon"><i class="fa-solid fa-bars"></i></button><span class="page-title">QR Scanner</span></div>
+      <div class="topbar-actions"><div class="avatar" id="avatar-initials">--</div></div>
+    </div>
+
+    <div class="app-content" style="max-width:520px;">
+      <div class="panel text-center">
+        <div id="start-state">
+          <div class="qr-scan-frame" id="qr-reader"></div>
+          <button class="btn btn-primary" id="scan-btn" style="margin-top:18px;"><i class="fa-solid fa-camera"></i> Start Scanning</button>
+        </div>
+
+        <div id="loading-state" class="hidden"><span class="spinner dark" style="width:32px;height:32px;"></span><h3 style="margin-top:14px;">Verifying...</h3></div>
+
+        <div id="valid-state" class="hidden">
+          <div class="verify-icon ok" style="margin:0 auto 14px;"><i class="fa-solid fa-check"></i></div>
+          <h2>✓ VERIFIED</h2>
+          <div style="text-align:left; background:var(--br-white-soft); border-radius:var(--radius-md); padding:16px; margin-top:16px;">
+            <div class="receipt-row"><span class="label">Name</span><span class="value" id="v-name">—</span></div>
+            <div class="receipt-row"><span class="label">Serial</span><span class="value" id="v-serial">—</span></div>
+            <div class="receipt-row"><span class="label">Type</span><span class="value" id="v-type">—</span></div>
+            <div class="receipt-row"><span class="label">Unit No.</span><span class="value" id="v-unit">—</span></div>
+            <div class="receipt-row"><span class="label">Status</span><span class="value" id="v-status">—</span></div>
+            <div class="receipt-row" style="border-bottom:none;"><span class="label">Expiry</span><span class="value" id="v-expiry">—</span></div>
+          </div>
+          <button class="btn btn-outline btn-block" style="margin-top:18px;" id="reset-1">Scan Another</button>
+        </div>
+
+        <div id="invalid-state" class="hidden">
+          <div class="verify-icon fail" style="margin:0 auto 14px;"><i class="fa-solid fa-xmark"></i></div>
+          <h2>✕ INVALID QR CODE</h2>
+          <p style="margin-top:8px;">This rental record could not be verified.</p>
+          <button class="btn btn-outline btn-block" style="margin-top:18px;" id="reset-2">Try Again</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><h3>Recent Scans (this session)</h3></div>
+        <div id="recent-scans"><p style="font-size:0.85rem; color:var(--text-muted);">No scans yet this session.</p></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script type="module">
+  import { requireAdmin, logoutUser } from "../assets/js/auth.js";
+  import { adminVerifyQr, logActivity } from "../assets/js/admin.js";
+  import { startQrScanner, stopQrScanner } from "../assets/js/qr.js";
+
+  document.getElementById("logout-link").addEventListener("click", (e) => { e.preventDefault(); logoutUser(); });
+
+  let scannerInstance = null;
+  const recent = [];
+
+  requireAdmin(async (user, adminData) => {
+    document.getElementById("page-loader").classList.add("hidden");
+    document.getElementById("app-shell").classList.remove("hidden");
+    document.getElementById("avatar-initials").textContent = getInitials(adminData?.name || user.email);
+  });
+
+  function showState(id) {
+    ["start-state", "loading-state", "valid-state", "invalid-state"].forEach(s => document.getElementById(s).classList.toggle("hidden", s !== id));
+  }
+
+  function renderRecent() {
+    document.getElementById("recent-scans").innerHTML = recent.length
+      ? recent.map(r => `<div class="activity-feed-item"><span class="a-dot" style="background:${r.valid ? 'var(--br-green-500)' : 'var(--br-red)'};"></span><div><div>${r.valid ? `Verified: ${r.serialNumber}` : "Invalid scan"}</div><div class="a-time">${r.time}</div></div></div>`).join("")
+      : `<p style="font-size:0.85rem; color:var(--text-muted);">No scans yet this session.</p>`;
+  }
+
+  document.getElementById("scan-btn").addEventListener("click", async () => {
+    document.getElementById("scan-btn").classList.add("hidden");
+    try {
+      scannerInstance = await startQrScanner("qr-reader", async (token) => {
+        await stopQrScanner(scannerInstance);
+        showState("loading-state");
+        try {
+          const data = await adminVerifyQr(token);
+          await logActivity("Admin verified QR", token.slice(0, 12));
+          recent.unshift({ valid: !!data?.valid, serialNumber: data?.serialNumber, time: new Date().toLocaleTimeString() });
+          renderRecent();
+          if (data?.valid) {
+            document.getElementById("v-name").textContent = data.name || "—";
+            document.getElementById("v-serial").textContent = data.serialNumber || "—";
+            document.getElementById("v-type").textContent = data.type || "—";
+            document.getElementById("v-unit").textContent = data.unitNumber || "—";
+            document.getElementById("v-status").textContent = data.rentalStatus || "—";
+            document.getElementById("v-expiry").textContent = formatDate(data.expiryDate);
+            showState("valid-state");
+          } else {
+            showState("invalid-state");
+          }
+        } catch {
+          showState("invalid-state");
+        }
+      });
+    } catch {
+      showToast("Could not access camera.", "error");
+      document.getElementById("scan-btn").classList.remove("hidden");
+    }
+  });
+
+  function reset() {
+    showState("start-state");
+    document.getElementById("scan-btn").classList.remove("hidden");
+  }
+  document.getElementById("reset-1").addEventListener("click", reset);
+  document.getElementById("reset-2").addEventListener("click", reset);
+</script>
+<script src="../assets/js/utils.js"></script>
+</body>
+</html>

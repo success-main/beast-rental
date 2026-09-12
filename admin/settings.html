@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Settings — Beast Rentals Admin</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="../assets/css/style.css">
+<link rel="stylesheet" href="../assets/css/admin.css">
+<link rel="stylesheet" href="../assets/css/responsive.css">
+</head>
+<body>
+
+<div id="page-loader" class="page-loader"><span class="brand-mark"><i class="fa-solid fa-shield-dog"></i></span><span class="spinner dark"></span></div>
+
+<div class="app-shell hidden" id="app-shell">
+  <aside class="app-sidebar">
+    <a href="../index.html" class="brand"><span class="brand-mark"><i class="fa-solid fa-shield-dog"></i></span>Beast Rentals</a>
+    <a href="dashboard.html" class="side-link"><i class="fa-solid fa-gauge"></i> Dashboard</a>
+    <a href="users.html" class="side-link"><i class="fa-solid fa-users"></i> Users</a>
+    <a href="shops.html" class="side-link"><i class="fa-solid fa-store"></i> Shops</a>
+    <a href="farms.html" class="side-link"><i class="fa-solid fa-tractor"></i> Farms</a>
+    <a href="rentals.html" class="side-link"><i class="fa-solid fa-house-chimney"></i> Rentals</a>
+    <a href="payments.html" class="side-link"><i class="fa-solid fa-credit-card"></i> Payments</a>
+    <a href="transactions.html" class="side-link"><i class="fa-solid fa-clock-rotate-left"></i> Transactions</a>
+    <a href="receipts.html" class="side-link"><i class="fa-solid fa-receipt"></i> Receipts</a>
+    <a href="qr-management.html" class="side-link"><i class="fa-solid fa-qrcode"></i> QR Management</a>
+    <a href="qr-scanner.html" class="side-link"><i class="fa-solid fa-camera"></i> QR Scanner</a>
+    <a href="notifications.html" class="side-link"><i class="fa-solid fa-bell"></i> Notifications</a>
+    <a href="reports.html" class="side-link"><i class="fa-solid fa-chart-line"></i> Reports</a>
+    <div class="side-section-label">System</div>
+    <a href="activity-logs.html" class="side-link"><i class="fa-solid fa-list-check"></i> Activity Logs</a>
+    <a href="administrators.html" class="side-link"><i class="fa-solid fa-user-shield"></i> Administrators</a>
+    <a href="settings.html" class="side-link active"><i class="fa-solid fa-gear"></i> Settings</a>
+    <a href="#" id="logout-link" class="side-link"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+  </aside>
+
+  <main class="app-main">
+    <div class="app-topbar">
+      <div style="display:flex; align-items:center; gap:14px;"><button class="mobile-menu-btn btn-icon"><i class="fa-solid fa-bars"></i></button><span class="page-title">Settings</span></div>
+      <div class="topbar-actions"><div class="avatar" id="avatar-initials">--</div></div>
+    </div>
+
+    <div class="app-content" style="max-width:760px;">
+      <div class="settings-tabs">
+        <button class="active" data-tab="business">Business</button>
+        <button data-tab="rental">Rental</button>
+        <button data-tab="notifications">Notifications</button>
+        <button data-tab="system">System</button>
+      </div>
+
+      <form id="settings-form">
+        <div class="panel tab-panel" data-tab-panel="business">
+          <div class="settings-grid">
+            <div class="form-group"><label>Business Name</label><div class="input-wrap"><input type="text" id="businessName"></div></div>
+            <div class="form-group"><label>Support Phone</label><div class="input-wrap"><input type="text" id="businessPhone"></div></div>
+            <div class="form-group"><label>Support Email</label><div class="input-wrap"><input type="email" id="businessEmail"></div></div>
+            <div class="form-group"><label>Address</label><div class="input-wrap"><input type="text" id="businessAddress"></div></div>
+          </div>
+        </div>
+
+        <div class="panel tab-panel hidden" data-tab-panel="rental">
+          <div class="settings-grid">
+            <div class="form-group"><label>Annual Rental Fee (₦)</label><div class="input-wrap"><input type="number" id="annualRentalFee" min="0"></div></div>
+            <div class="form-group"><label>Rental Duration (days)</label><div class="input-wrap"><input type="number" id="rentalDurationDays" min="1"></div></div>
+            <div class="form-group"><label>Green Threshold (days remaining)</label><div class="input-wrap"><input type="number" id="greenMinDays" min="0"></div></div>
+            <div class="form-group"><label>Yellow Threshold (days remaining)</label><div class="input-wrap"><input type="number" id="yellowMinDays" min="0"></div></div>
+          </div>
+          <p class="field-hint">Below the yellow threshold is treated as red/expiring; 0 or less is expired.</p>
+        </div>
+
+        <div class="panel tab-panel hidden" data-tab-panel="notifications">
+          <div class="form-group"><label>Reminder Days Before Expiry (comma-separated)</label><div class="input-wrap"><input type="text" id="reminderDays" placeholder="60, 30, 7"></div></div>
+        </div>
+
+        <div class="panel tab-panel hidden" data-tab-panel="system">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div><strong>Maintenance Mode</strong><p style="font-size:0.85rem;">Temporarily restrict user access while you perform updates.</p></div>
+            <label><input type="checkbox" id="maintenanceMode"></label>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary" id="save-btn">Save Settings</button>
+      </form>
+    </div>
+  </main>
+</div>
+
+<script type="module">
+  import { requireAdmin, logoutUser } from "../assets/js/auth.js";
+  import { getGeneralSettings, saveGeneralSettings } from "../assets/js/admin.js";
+
+  document.getElementById("logout-link").addEventListener("click", (e) => { e.preventDefault(); logoutUser(); });
+
+  document.querySelectorAll(".settings-tabs button").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".settings-tabs button").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      document.querySelectorAll(".tab-panel").forEach(p => p.classList.toggle("hidden", p.dataset.tabPanel !== btn.dataset.tab));
+    });
+  });
+
+  requireAdmin(async (user, adminData) => {
+    document.getElementById("page-loader").classList.add("hidden");
+    document.getElementById("app-shell").classList.remove("hidden");
+    document.getElementById("avatar-initials").textContent = getInitials(adminData?.name || user.email);
+
+    const s = await getGeneralSettings();
+    if (s) {
+      document.getElementById("businessName").value = s.businessName || "";
+      document.getElementById("businessPhone").value = s.businessPhone || "";
+      document.getElementById("businessEmail").value = s.businessEmail || "";
+      document.getElementById("businessAddress").value = s.businessAddress || "";
+      document.getElementById("annualRentalFee").value = s.annualRentalFee ?? 250;
+      document.getElementById("rentalDurationDays").value = s.rentalDurationDays ?? 365;
+      document.getElementById("greenMinDays").value = s.thresholds?.greenMinDays ?? 60;
+      document.getElementById("yellowMinDays").value = s.thresholds?.yellowMinDays ?? 30;
+      document.getElementById("reminderDays").value = (s.reminderDays || [60, 30, 7]).join(", ");
+      document.getElementById("maintenanceMode").checked = !!s.maintenanceMode;
+    }
+  });
+
+  document.getElementById("settings-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById("save-btn");
+    btn.disabled = true;
+    try {
+      await saveGeneralSettings({
+        businessName: document.getElementById("businessName").value.trim(),
+        businessPhone: document.getElementById("businessPhone").value.trim(),
+        businessEmail: document.getElementById("businessEmail").value.trim(),
+        businessAddress: document.getElementById("businessAddress").value.trim(),
+        annualRentalFee: Number(document.getElementById("annualRentalFee").value || 0),
+        rentalDurationDays: Number(document.getElementById("rentalDurationDays").value || 365),
+        thresholds: {
+          greenMinDays: Number(document.getElementById("greenMinDays").value || 60),
+          yellowMinDays: Number(document.getElementById("yellowMinDays").value || 30)
+        },
+        reminderDays: document.getElementById("reminderDays").value.split(",").map(s => Number(s.trim())).filter(Boolean),
+        maintenanceMode: document.getElementById("maintenanceMode").checked
+      });
+      showToast("Settings saved.", "success");
+    } catch {
+      showToast("Could not save settings.", "error");
+    } finally {
+      btn.disabled = false;
+    }
+  });
+</script>
+<script src="../assets/js/utils.js"></script>
+</body>
+</html>

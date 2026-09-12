@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Users — Beast Rentals Admin</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="../assets/css/style.css">
+<link rel="stylesheet" href="../assets/css/admin.css">
+<link rel="stylesheet" href="../assets/css/responsive.css">
+</head>
+<body>
+
+<div id="page-loader" class="page-loader"><span class="brand-mark"><i class="fa-solid fa-shield-dog"></i></span><span class="spinner dark"></span></div>
+
+<div class="app-shell hidden" id="app-shell">
+  <aside class="app-sidebar">
+    <a href="../index.html" class="brand"><span class="brand-mark"><i class="fa-solid fa-shield-dog"></i></span>Beast Rentals</a>
+    <a href="dashboard.html" class="side-link"><i class="fa-solid fa-gauge"></i> Dashboard</a>
+    <a href="users.html" class="side-link active"><i class="fa-solid fa-users"></i> Users</a>
+    <a href="shops.html" class="side-link"><i class="fa-solid fa-store"></i> Shops</a>
+    <a href="farms.html" class="side-link"><i class="fa-solid fa-tractor"></i> Farms</a>
+    <a href="rentals.html" class="side-link"><i class="fa-solid fa-house-chimney"></i> Rentals</a>
+    <a href="payments.html" class="side-link"><i class="fa-solid fa-credit-card"></i> Payments</a>
+    <a href="transactions.html" class="side-link"><i class="fa-solid fa-clock-rotate-left"></i> Transactions</a>
+    <a href="receipts.html" class="side-link"><i class="fa-solid fa-receipt"></i> Receipts</a>
+    <a href="qr-management.html" class="side-link"><i class="fa-solid fa-qrcode"></i> QR Management</a>
+    <a href="qr-scanner.html" class="side-link"><i class="fa-solid fa-camera"></i> QR Scanner</a>
+    <a href="notifications.html" class="side-link"><i class="fa-solid fa-bell"></i> Notifications</a>
+    <a href="reports.html" class="side-link"><i class="fa-solid fa-chart-line"></i> Reports</a>
+    <div class="side-section-label">System</div>
+    <a href="activity-logs.html" class="side-link"><i class="fa-solid fa-list-check"></i> Activity Logs</a>
+    <a href="administrators.html" class="side-link"><i class="fa-solid fa-user-shield"></i> Administrators</a>
+    <a href="settings.html" class="side-link"><i class="fa-solid fa-gear"></i> Settings</a>
+    <a href="#" id="logout-link" class="side-link"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+  </aside>
+
+  <main class="app-main">
+    <div class="app-topbar">
+      <div style="display:flex; align-items:center; gap:14px;"><button class="mobile-menu-btn btn-icon"><i class="fa-solid fa-bars"></i></button><span class="page-title">Users</span></div>
+      <div class="topbar-actions"><div class="avatar" id="avatar-initials">--</div></div>
+    </div>
+
+    <div class="app-content">
+      <div class="panel">
+        <div class="toolbar">
+          <div class="search-box"><i class="fa-solid fa-magnifying-glass"></i><input type="text" id="search-input" placeholder="Search by name, serial, email..."></div>
+          <select id="type-filter"><option value="">All Types</option><option value="SHOP">Shop</option><option value="FARM">Farm</option></select>
+          <select id="status-filter"><option value="">All Status</option><option value="active">Active</option><option value="suspended">Suspended</option></select>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Serial</th><th>Name</th><th>Type</th><th>Unit No.</th><th>Phone</th><th>Email</th><th>Status</th><th>Expiry</th><th>Actions</th></tr></thead>
+            <tbody id="tbody"><tr><td colspan="9" style="text-align:center; padding:30px;"><span class="spinner dark"></span></td></tr></tbody>
+          </table>
+        </div>
+        <div id="empty-state" class="empty-state hidden"><i class="fa-solid fa-users"></i><h4>No users found.</h4></div>
+        <div class="pagination" id="pagination"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="modal-overlay" id="user-modal">
+  <div class="modal-box">
+    <div class="modal-head"><h3>User Details</h3><button class="modal-close" data-close-modal="user-modal">&times;</button></div>
+    <div id="user-modal-body"></div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" data-close-modal="user-modal">Close</button>
+      <button class="btn btn-danger" id="toggle-status-btn">Suspend</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { requireAdmin, logoutUser } from "../assets/js/auth.js";
+  import { listUsers, listRentals, setUserStatus } from "../assets/js/admin.js";
+
+  document.getElementById("logout-link").addEventListener("click", (e) => { e.preventDefault(); logoutUser(); });
+
+  let allUsers = [], rentalMap = {};
+  const PAGE_SIZE = 10;
+  let currentPage = 1, selectedUser = null;
+
+  requireAdmin(async (user, adminData) => {
+    document.getElementById("page-loader").classList.add("hidden");
+    document.getElementById("app-shell").classList.remove("hidden");
+    document.getElementById("avatar-initials").textContent = getInitials(adminData?.name || user.email);
+
+    const [users, rentals] = await Promise.all([listUsers(), listRentals()]);
+    allUsers = users;
+    rentals.forEach(r => { rentalMap[r.userId || r.id] = r; });
+    render();
+  });
+
+  function getFiltered() {
+    const term = document.getElementById("search-input").value.trim().toLowerCase();
+    const type = document.getElementById("type-filter").value;
+    const status = document.getElementById("status-filter").value;
+    return allUsers.filter(u => {
+      const matchesTerm = !term || [u.name, u.serialNumber, u.email].some(v => (v || "").toLowerCase().includes(term));
+      const matchesType = !type || u.type === type;
+      const matchesStatus = !status || u.status === status;
+      return matchesTerm && matchesType && matchesStatus;
+    });
+  }
+
+  function render() {
+    const filtered = getFiltered();
+    const tbody = document.getElementById("tbody");
+    const empty = document.getElementById("empty-state");
+    if (!filtered.length) { tbody.innerHTML = ""; empty.classList.remove("hidden"); document.getElementById("pagination").innerHTML = ""; return; }
+    empty.classList.add("hidden");
+
+    const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+    currentPage = Math.min(currentPage, totalPages) || 1;
+    const pageItems = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
+    tbody.innerHTML = pageItems.map(u => {
+      const rental = rentalMap[u.id];
+      const statusBadge = u.status === "suspended" ? `<span class="badge badge-red">SUSPENDED</span>` : `<span class="badge badge-green">ACTIVE</span>`;
+      return `
+        <tr>
+          <td style="font-family:monospace;">${u.serialNumber || "—"}</td>
+          <td>${u.name || "—"}</td>
+          <td>${u.type || "—"}</td>
+          <td>${u.unitNumber || "—"}</td>
+          <td>${u.phone || "—"}</td>
+          <td>${u.email || "—"}</td>
+          <td>${statusBadge}</td>
+          <td>${rental?.expiryDate ? formatDate(rental.expiryDate) : "—"}</td>
+          <td><button class="btn btn-sm btn-outline view-btn" data-id="${u.id}">View</button></td>
+        </tr>`;
+    }).join("");
+
+    document.querySelectorAll(".view-btn").forEach(b => b.addEventListener("click", () => openUser(b.dataset.id)));
+
+    const pag = document.getElementById("pagination");
+    pag.innerHTML = "";
+    for (let i = 1; i <= totalPages; i++) {
+      const b = document.createElement("button");
+      b.textContent = i;
+      if (i === currentPage) b.classList.add("active");
+      b.addEventListener("click", () => { currentPage = i; render(); });
+      pag.appendChild(b);
+    }
+  }
+
+  function openUser(id) {
+    selectedUser = allUsers.find(u => u.id === id);
+    if (!selectedUser) return;
+    const rental = rentalMap[id];
+    document.getElementById("user-modal-body").innerHTML = `
+      <div class="info-grid" style="grid-template-columns:1fr 1fr;">
+        <div class="info-tile"><div class="lbl">Name</div><div class="val">${selectedUser.name || "—"}</div></div>
+        <div class="info-tile"><div class="lbl">Serial</div><div class="val">${selectedUser.serialNumber || "—"}</div></div>
+        <div class="info-tile"><div class="lbl">Type</div><div class="val">${selectedUser.type || "—"}</div></div>
+        <div class="info-tile"><div class="lbl">Unit No.</div><div class="val">${selectedUser.unitNumber || "—"}</div></div>
+        <div class="info-tile"><div class="lbl">Phone</div><div class="val">${selectedUser.phone || "—"}</div></div>
+        <div class="info-tile"><div class="lbl">Email</div><div class="val" style="font-size:0.82rem;">${selectedUser.email || "—"}</div></div>
+        <div class="info-tile"><div class="lbl">Rental Expiry</div><div class="val">${rental?.expiryDate ? formatDate(rental.expiryDate) : "—"}</div></div>
+        <div class="info-tile"><div class="lbl">Status</div><div class="val">${selectedUser.status || "active"}</div></div>
+      </div>`;
+    const toggleBtn = document.getElementById("toggle-status-btn");
+    toggleBtn.textContent = selectedUser.status === "suspended" ? "Activate User" : "Suspend User";
+    toggleBtn.className = selectedUser.status === "suspended" ? "btn btn-primary" : "btn btn-danger";
+    openModal("user-modal");
+  }
+
+  document.getElementById("toggle-status-btn").addEventListener("click", async () => {
+    if (!selectedUser) return;
+    const newStatus = selectedUser.status === "suspended" ? "active" : "suspended";
+    try {
+      await setUserStatus(selectedUser.id, newStatus);
+      selectedUser.status = newStatus;
+      showToast(`User ${newStatus === "suspended" ? "suspended" : "activated"}.`, "success");
+      closeModal("user-modal");
+      render();
+    } catch { showToast("Action failed.", "error"); }
+  });
+
+  document.getElementById("search-input").addEventListener("input", () => { currentPage = 1; render(); });
+  document.getElementById("type-filter").addEventListener("change", () => { currentPage = 1; render(); });
+  document.getElementById("status-filter").addEventListener("change", () => { currentPage = 1; render(); });
+</script>
+<script src="../assets/js/utils.js"></script>
+</body>
+</html>

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Receipt — Beast Rentals</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="../assets/css/style.css">
+<link rel="stylesheet" href="../assets/css/dashboard.css">
+<link rel="stylesheet" href="../assets/css/responsive.css">
+</head>
+<body>
+
+<div id="page-loader" class="page-loader">
+  <span class="brand-mark"><i class="fa-solid fa-shield-dog"></i></span>
+  <span class="spinner dark"></span>
+</div>
+
+<div class="app-shell hidden" id="app-shell">
+  <aside class="app-sidebar">
+    <a href="../index.html" class="brand"><span class="brand-mark"><i class="fa-solid fa-shield-dog"></i></span>Beast Rentals</a>
+    <a href="dashboard.html" class="side-link"><i class="fa-solid fa-gauge"></i> Dashboard</a>
+    <a href="rental.html" class="side-link"><i class="fa-solid fa-house-chimney"></i> My Rental</a>
+    <a href="payment.html" class="side-link"><i class="fa-solid fa-credit-card"></i> Make Payment</a>
+    <a href="transactions.html" class="side-link"><i class="fa-solid fa-clock-rotate-left"></i> Transactions</a>
+    <a href="receipts.html" class="side-link active"><i class="fa-solid fa-receipt"></i> Receipts</a>
+    <a href="qr.html" class="side-link"><i class="fa-solid fa-qrcode"></i> My QR Code</a>
+    <a href="notifications.html" class="side-link"><i class="fa-solid fa-bell"></i> Notifications</a>
+    <div class="side-section-label">Account</div>
+    <a href="profile.html" class="side-link"><i class="fa-solid fa-user"></i> My Profile</a>
+    <a href="#" id="logout-link" class="side-link"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+  </aside>
+
+  
+  <nav class="bottom-nav" id="bottom-nav">
+    <a href="dashboard.html" data-page="dashboard.html"><i class="fa-solid fa-gauge"></i><span>Home</span></a>
+    <a href="rental.html" data-page="rental.html"><i class="fa-solid fa-house-chimney"></i><span>Rental</span></a>
+    <a href="payment.html" data-page="payment.html" class="bn-pay"><i class="fa-solid fa-credit-card"></i><span>Pay</span></a>
+    <a href="receipts.html" data-page="receipts.html"><i class="fa-solid fa-receipt"></i><span>Receipts</span></a>
+    <a href="notifications.html" data-page="notifications.html"><i class="fa-solid fa-bell"></i><span>Alerts</span></a>
+  </nav>
+
+  <main class="app-main">
+    <div class="app-topbar">
+      <div style="display:flex; align-items:center; gap:14px;">
+        <button class="mobile-menu-btn btn-icon"><i class="fa-solid fa-bars"></i></button>
+        <span class="page-title">Receipt</span>
+      </div>
+      <div class="topbar-actions"><div class="avatar" id="avatar-initials">--</div></div>
+    </div>
+
+    <div class="app-content">
+      <div id="not-found" class="empty-state hidden">
+        <i class="fa-solid fa-circle-exclamation"></i>
+        <h4>Receipt not found.</h4>
+        <a href="receipts.html" class="btn btn-outline" style="margin-top:14px;">Back to Receipts</a>
+      </div>
+
+      <div id="receipt-wrap" class="hidden">
+        <div class="receipt-card" id="receipt-card">
+          <div class="rc-header">
+            <div class="brand" style="font-size:1.1rem;"><span class="brand-mark"><i class="fa-solid fa-shield-dog"></i></span>Beast Rentals</div>
+            <span style="font-family:monospace; font-weight:700; color:var(--br-green-700);" id="r-number">—</span>
+          </div>
+
+          <div class="rc-status">
+            <span class="badge badge-green" id="r-status"><i class="fa-solid fa-circle-check"></i> VERIFIED PAYMENT</span>
+          </div>
+
+          <div class="receipt-row"><span class="label">Name</span><span class="value" id="r-name">—</span></div>
+          <div class="receipt-row"><span class="label">Serial Number</span><span class="value" id="r-serial">—</span></div>
+          <div class="receipt-row"><span class="label">Type</span><span class="value" id="r-type">—</span></div>
+          <div class="receipt-row"><span class="label">Unit Number</span><span class="value" id="r-unit">—</span></div>
+          <div class="receipt-row"><span class="label">Amount</span><span class="value" id="r-amount">—</span></div>
+          <div class="receipt-row"><span class="label">Payment Date</span><span class="value" id="r-date">—</span></div>
+          <div class="receipt-row"><span class="label">Paystack Reference</span><span class="value" id="r-ref" style="font-size:0.8rem;">—</span></div>
+          <div class="receipt-row"><span class="label">Transaction ID</span><span class="value" id="r-txid" style="font-size:0.8rem;">—</span></div>
+          <div class="receipt-row"><span class="label">Rental Start</span><span class="value" id="r-start">—</span></div>
+          <div class="receipt-row"><span class="label">Rental Expiry</span><span class="value" id="r-expiry">—</span></div>
+
+          <div class="receipt-qr" id="receipt-qr"></div>
+          <p style="text-align:center; font-size:0.75rem; color:var(--text-muted); margin-top:10px;">Scan to verify authenticity</p>
+        </div>
+
+        <div class="receipt-actions">
+          <button class="btn btn-outline" id="download-btn"><i class="fa-solid fa-download"></i> Download</button>
+          <button class="btn btn-outline" id="print-btn"><i class="fa-solid fa-print"></i> Print</button>
+          <button class="btn btn-outline" id="share-btn"><i class="fa-solid fa-share-nodes"></i> Share</button>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script type="module">
+  import { requireAuth, logoutUser } from "../assets/js/auth.js";
+  import { db } from "../assets/js/firebase-config.js";
+  import { collection, query, where, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import { downloadReceiptAsImage, printReceipt, shareReceipt } from "../assets/js/receipt.js";
+  import { renderQrCode } from "../assets/js/qr.js";
+
+  document.getElementById("logout-link").addEventListener("click", (e) => { e.preventDefault(); logoutUser(); });
+
+  requireAuth(async (user, profile) => {
+    document.getElementById("page-loader").classList.add("hidden");
+    document.getElementById("app-shell").classList.remove("hidden");
+    document.getElementById("avatar-initials").textContent = getInitials(profile?.name || "?");
+
+    const receiptNumber = getQueryParam("receipt");
+    if (!receiptNumber) { document.getElementById("not-found").classList.remove("hidden"); return; }
+
+    // Users can only read their own receipts per Firestore Security Rules.
+    const q = query(collection(db, "receipts"), where("receiptNumber", "==", receiptNumber), where("userId", "==", user.uid), limit(1));
+    const snap = await getDocs(q);
+
+    if (snap.empty) { document.getElementById("not-found").classList.remove("hidden"); return; }
+
+    const r = snap.docs[0].data();
+    document.getElementById("receipt-wrap").classList.remove("hidden");
+    document.getElementById("r-number").textContent = r.receiptNumber;
+    document.getElementById("r-name").textContent = r.name || profile?.name || "—";
+    document.getElementById("r-serial").textContent = r.serialNumber || "—";
+    document.getElementById("r-type").textContent = r.type || "—";
+    document.getElementById("r-unit").textContent = r.unitNumber || "—";
+    document.getElementById("r-amount").textContent = formatCurrency(r.amount || 0, r.currency || "NGN");
+    document.getElementById("r-date").textContent = formatDate(r.paymentDate);
+    document.getElementById("r-ref").textContent = r.paystackReference || "—";
+    document.getElementById("r-txid").textContent = r.transactionId || "—";
+    document.getElementById("r-start").textContent = formatDate(r.rentalStartDate);
+    document.getElementById("r-expiry").textContent = formatDate(r.rentalExpiryDate);
+
+    if (r.qrToken) renderQrCode("receipt-qr", r.qrToken);
+
+    document.getElementById("download-btn").addEventListener("click", () => downloadReceiptAsImage("receipt-card", `${r.receiptNumber}.png`));
+    document.getElementById("print-btn").addEventListener("click", () => printReceipt("receipt-card"));
+    document.getElementById("share-btn").addEventListener("click", () => shareReceipt(r.receiptNumber));
+  });
+</script>
+<script src="../assets/js/utils.js"></script>
+</body>
+</html>

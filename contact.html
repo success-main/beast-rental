@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contact — Beast Rentals</title>
+<meta name="description" content="Get in touch with the Beast Rentals team.">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="assets/css/style.css">
+<link rel="stylesheet" href="assets/css/responsive.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container">
+    <a href="index.html" class="brand"><span class="brand-mark"><i class="fa-solid fa-shield-dog"></i></span>Beast Rentals</a>
+    <nav class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="about.html">About</a>
+      <a href="terms.html">Terms</a>
+      <a href="privacy.html">Privacy</a>
+      <a href="contact.html" class="active">Contact</a>
+    </nav>
+    <div class="nav-actions">
+      <a href="login.html" class="btn btn-ghost">Login</a>
+      <a href="signup.html" class="btn btn-primary">Register Now</a>
+      <button class="nav-toggle btn-icon" aria-label="Toggle menu"><i class="fa-solid fa-bars"></i></button>
+    </div>
+  </div>
+</header>
+
+<section class="section">
+  <div class="container" style="max-width:980px;">
+    <div class="section-head">
+      <span class="eyebrow">Get in Touch</span>
+      <h2>We'd love to hear from you</h2>
+      <p>Questions about your rental, a payment, or the platform itself — reach out and we'll respond as soon as we can.</p>
+    </div>
+
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 28px;" id="contact-grid">
+      <div class="card" style="padding:32px;">
+        <h3 style="margin-bottom:20px;">Send a message</h3>
+        <form id="contact-form">
+          <div class="form-group">
+            <label for="c-name">Full Name</label>
+            <div class="input-wrap"><input type="text" id="c-name" required placeholder="Your name"></div>
+          </div>
+          <div class="form-group">
+            <label for="c-email">Email Address</label>
+            <div class="input-wrap"><input type="email" id="c-email" required placeholder="you@example.com"></div>
+          </div>
+          <div class="form-group">
+            <label for="c-subject">Subject</label>
+            <div class="input-wrap"><input type="text" id="c-subject" required placeholder="How can we help?"></div>
+          </div>
+          <div class="form-group">
+            <label for="c-message">Message</label>
+            <div class="input-wrap"><textarea id="c-message" rows="5" required placeholder="Write your message..." style="width:100%; padding:13px 14px; border-radius:8px; border:1.5px solid var(--border-subtle); font-size:0.94rem;"></textarea></div>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">Send Message <i class="fa-solid fa-paper-plane"></i></button>
+        </form>
+      </div>
+
+      <div>
+        <div class="card" style="padding:28px; margin-bottom:20px;">
+          <div class="icon-wrap" style="margin-bottom:14px;"><i class="fa-solid fa-envelope"></i></div>
+          <h3>Email</h3>
+          <p>support@beastrentals.example</p>
+        </div>
+        <div class="card" style="padding:28px; margin-bottom:20px;">
+          <div class="icon-wrap" style="margin-bottom:14px;"><i class="fa-solid fa-phone"></i></div>
+          <h3>Phone</h3>
+          <p>+234 800 000 0000</p>
+        </div>
+        <div class="card" style="padding:28px;">
+          <div class="icon-wrap" style="margin-bottom:14px;"><i class="fa-solid fa-location-dot"></i></div>
+          <h3>Office</h3>
+          <p>Replace with your business address before launch.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-bottom"><span>© 2026 Beast Rentals. All rights reserved.</span><span>Built with Firebase & Paystack</span></div>
+  </div>
+</footer>
+
+<script src="assets/js/utils.js"></script>
+<script>
+  // Placeholder submit handler. Wire this to a Cloud Function / email
+  // service (e.g. a callable "submitContactMessage") for production use.
+  document.getElementById("contact-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    showToast("Message sent — we'll get back to you soon.", "success");
+    e.target.reset();
+  });
+  document.getElementById("contact-grid").style.gridTemplateColumns = window.innerWidth < 860 ? "1fr" : "1fr 1fr";
+</script>
+</body>
+</html>

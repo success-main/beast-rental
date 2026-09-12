@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Transaction History — Beast Rentals</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="../assets/css/style.css">
+<link rel="stylesheet" href="../assets/css/dashboard.css">
+<link rel="stylesheet" href="../assets/css/responsive.css">
+</head>
+<body>
+
+<div id="page-loader" class="page-loader">
+  <span class="brand-mark"><i class="fa-solid fa-shield-dog"></i></span>
+  <span class="spinner dark"></span>
+</div>
+
+<div class="app-shell hidden" id="app-shell">
+  <aside class="app-sidebar">
+    <a href="../index.html" class="brand"><span class="brand-mark"><i class="fa-solid fa-shield-dog"></i></span>Beast Rentals</a>
+    <a href="dashboard.html" class="side-link"><i class="fa-solid fa-gauge"></i> Dashboard</a>
+    <a href="rental.html" class="side-link"><i class="fa-solid fa-house-chimney"></i> My Rental</a>
+    <a href="payment.html" class="side-link"><i class="fa-solid fa-credit-card"></i> Make Payment</a>
+    <a href="transactions.html" class="side-link active"><i class="fa-solid fa-clock-rotate-left"></i> Transactions</a>
+    <a href="receipts.html" class="side-link"><i class="fa-solid fa-receipt"></i> Receipts</a>
+    <a href="qr.html" class="side-link"><i class="fa-solid fa-qrcode"></i> My QR Code</a>
+    <a href="notifications.html" class="side-link"><i class="fa-solid fa-bell"></i> Notifications</a>
+    <div class="side-section-label">Account</div>
+    <a href="profile.html" class="side-link"><i class="fa-solid fa-user"></i> My Profile</a>
+    <a href="#" id="logout-link" class="side-link"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+  </aside>
+
+  
+  <nav class="bottom-nav" id="bottom-nav">
+    <a href="dashboard.html" data-page="dashboard.html"><i class="fa-solid fa-gauge"></i><span>Home</span></a>
+    <a href="rental.html" data-page="rental.html"><i class="fa-solid fa-house-chimney"></i><span>Rental</span></a>
+    <a href="payment.html" data-page="payment.html" class="bn-pay"><i class="fa-solid fa-credit-card"></i><span>Pay</span></a>
+    <a href="receipts.html" data-page="receipts.html"><i class="fa-solid fa-receipt"></i><span>Receipts</span></a>
+    <a href="notifications.html" data-page="notifications.html"><i class="fa-solid fa-bell"></i><span>Alerts</span></a>
+  </nav>
+
+  <main class="app-main">
+    <div class="app-topbar">
+      <div style="display:flex; align-items:center; gap:14px;">
+        <button class="mobile-menu-btn btn-icon"><i class="fa-solid fa-bars"></i></button>
+        <span class="page-title">Transaction History</span>
+      </div>
+      <div class="topbar-actions"><div class="avatar" id="avatar-initials">--</div></div>
+    </div>
+
+    <div class="app-content">
+      <div class="panel">
+        <div class="toolbar">
+          <div class="search-box"><i class="fa-solid fa-magnifying-glass"></i><input type="text" id="search-input" placeholder="Search by reference or receipt number..."></div>
+          <select id="status-filter">
+            <option value="">All Status</option>
+            <option value="success">Success</option>
+            <option value="pending">Pending</option>
+            <option value="failed">Failed</option>
+          </select>
+        </div>
+
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Transaction ID</th>
+                <th>Receipt No.</th>
+                <th>Amount</th>
+                <th>Date</th>
+                <th>Reference</th>
+                <th>Status</th>
+                <th>Rental Period</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="tx-tbody">
+              <tr><td colspan="8" style="text-align:center; padding:30px;"><span class="spinner dark"></span></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div id="empty-state" class="empty-state hidden">
+          <i class="fa-solid fa-inbox"></i>
+          <h4>No transactions yet.</h4>
+          <p>Your successful payments will appear here.</p>
+        </div>
+
+        <div class="pagination" id="pagination"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script type="module">
+  import { requireAuth, logoutUser } from "../assets/js/auth.js";
+  import { getMyTransactions } from "../assets/js/dashboard.js";
+
+  document.getElementById("logout-link").addEventListener("click", (e) => { e.preventDefault(); logoutUser(); });
+
+  let allTx = [];
+  const PAGE_SIZE = 8;
+  let currentPage = 1;
+
+  requireAuth(async (user, profile) => {
+    document.getElementById("page-loader").classList.add("hidden");
+    document.getElementById("app-shell").classList.remove("hidden");
+    document.getElementById("avatar-initials").textContent = getInitials(profile?.name || "?");
+
+    allTx = await getMyTransactions(user.uid);
+    render();
+  });
+
+  function statusBadge(status) {
+    const map = { success: "badge-green", pending: "badge-yellow", failed: "badge-red" };
+    return `<span class="badge ${map[status] || "badge-gray"}">${(status || "unknown").toUpperCase()}</span>`;
+  }
+
+  function getFiltered() {
+    const term = document.getElementById("search-input").value.trim().toLowerCase();
+    const status = document.getElementById("status-filter").value;
+    return allTx.filter(t => {
+      const matchesTerm = !term || (t.paystackReference || "").toLowerCase().includes(term) || (t.receiptNumber || "").toLowerCase().includes(term);
+      const matchesStatus = !status || t.status === status;
+      return matchesTerm && matchesStatus;
+    });
+  }
+
+  function render() {
+    const filtered = getFiltered();
+    const tbody = document.getElementById("tx-tbody");
+    const empty = document.getElementById("empty-state");
+
+    if (!filtered.length) {
+      tbody.innerHTML = "";
+      empty.classList.remove("hidden");
+      document.getElementById("pagination").innerHTML = "";
+      return;
+    }
+    empty.classList.add("hidden");
+
+    const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+    currentPage = Math.min(currentPage, totalPages) || 1;
+    const pageItems = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
+    tbody.innerHTML = pageItems.map(t => `
+      <tr>
+        <td>#${(t.id || "").slice(0, 8)}</td>
+        <td>${t.receiptNumber || "—"}</td>
+        <td>${formatCurrency(t.amount || 0, t.currency || "NGN")}</td>
+        <td>${formatDate(t.paymentDate || t.createdAt)}</td>
+        <td style="font-family: monospace; font-size:0.8rem;">${t.paystackReference || "—"}</td>
+        <td>${statusBadge(t.status)}</td>
+        <td style="font-size:0.8rem;">${formatDate(t.rentalStartDate)} → ${formatDate(t.rentalExpiryDate)}</td>
+        <td>${t.receiptNumber ? `<a href="receipt.html?receipt=${t.receiptNumber}" class="btn btn-sm btn-outline">View Receipt</a>` : ""}</td>
+      </tr>
+    `).join("");
+
+    const pag = document.getElementById("pagination");
+    pag.innerHTML = "";
+    for (let i = 1; i <= totalPages; i++) {
+      const b = document.createElement("button");
+      b.textContent = i;
+      if (i === currentPage) b.classList.add("active");
+      b.addEventListener("click", () => { currentPage = i; render(); });
+      pag.appendChild(b);
+    }
+  }
+
+  document.getElementById("search-input").addEventListener("input", () => { currentPage = 1; render(); });
+  document.getElementById("status-filter").addEventListener("change", () => { currentPage = 1; render(); });
+</script>
+<script src="../assets/js/utils.js"></script>
+</body>
+</html>

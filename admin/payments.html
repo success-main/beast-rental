@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Payments — Beast Rentals Admin</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="../assets/css/style.css">
+<link rel="stylesheet" href="../assets/css/admin.css">
+<link rel="stylesheet" href="../assets/css/responsive.css">
+</head>
+<body>
+
+<div id="page-loader" class="page-loader"><span class="brand-mark"><i class="fa-solid fa-shield-dog"></i></span><span class="spinner dark"></span></div>
+
+<div class="app-shell hidden" id="app-shell">
+  <aside class="app-sidebar">
+    <a href="../index.html" class="brand"><span class="brand-mark"><i class="fa-solid fa-shield-dog"></i></span>Beast Rentals</a>
+    <a href="dashboard.html" class="side-link"><i class="fa-solid fa-gauge"></i> Dashboard</a>
+    <a href="users.html" class="side-link"><i class="fa-solid fa-users"></i> Users</a>
+    <a href="shops.html" class="side-link"><i class="fa-solid fa-store"></i> Shops</a>
+    <a href="farms.html" class="side-link"><i class="fa-solid fa-tractor"></i> Farms</a>
+    <a href="rentals.html" class="side-link"><i class="fa-solid fa-house-chimney"></i> Rentals</a>
+    <a href="payments.html" class="side-link active"><i class="fa-solid fa-credit-card"></i> Payments</a>
+    <a href="transactions.html" class="side-link"><i class="fa-solid fa-clock-rotate-left"></i> Transactions</a>
+    <a href="receipts.html" class="side-link"><i class="fa-solid fa-receipt"></i> Receipts</a>
+    <a href="qr-management.html" class="side-link"><i class="fa-solid fa-qrcode"></i> QR Management</a>
+    <a href="qr-scanner.html" class="side-link"><i class="fa-solid fa-camera"></i> QR Scanner</a>
+    <a href="notifications.html" class="side-link"><i class="fa-solid fa-bell"></i> Notifications</a>
+    <a href="reports.html" class="side-link"><i class="fa-solid fa-chart-line"></i> Reports</a>
+    <div class="side-section-label">System</div>
+    <a href="activity-logs.html" class="side-link"><i class="fa-solid fa-list-check"></i> Activity Logs</a>
+    <a href="administrators.html" class="side-link"><i class="fa-solid fa-user-shield"></i> Administrators</a>
+    <a href="settings.html" class="side-link"><i class="fa-solid fa-gear"></i> Settings</a>
+    <a href="#" id="logout-link" class="side-link"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+  </aside>
+
+  <main class="app-main">
+    <div class="app-topbar">
+      <div style="display:flex; align-items:center; gap:14px;"><button class="mobile-menu-btn btn-icon"><i class="fa-solid fa-bars"></i></button><span class="page-title">Payments</span></div>
+      <div class="topbar-actions"><div class="avatar" id="avatar-initials">--</div></div>
+    </div>
+
+    <div class="app-content">
+      <div class="panel">
+        <div class="toolbar">
+          <div class="search-box"><i class="fa-solid fa-magnifying-glass"></i><input type="text" id="search-input" placeholder="Search by serial, reference..."></div>
+          <select id="status-filter"><option value="">All Status</option><option value="success">Success</option><option value="pending">Pending</option><option value="failed">Failed</option></select>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>User</th><th>Serial</th><th>Type</th><th>Unit</th><th>Amount</th><th>Reference</th><th>Transaction ID</th><th>Date</th><th>Status</th><th>Receipt</th></tr></thead>
+            <tbody id="tbody"><tr><td colspan="10" style="text-align:center; padding:30px;"><span class="spinner dark"></span></td></tr></tbody>
+          </table>
+        </div>
+        <div id="empty-state" class="empty-state hidden"><i class="fa-solid fa-credit-card"></i><h4>No payments recorded yet.</h4></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script type="module">
+  import { requireAdmin, logoutUser } from "../assets/js/auth.js";
+  import { listPayments, listUsers } from "../assets/js/admin.js";
+
+  document.getElementById("logout-link").addEventListener("click", (e) => { e.preventDefault(); logoutUser(); });
+
+  let allPayments = [], userMap = {};
+
+  requireAdmin(async (user, adminData) => {
+    document.getElementById("page-loader").classList.add("hidden");
+    document.getElementById("app-shell").classList.remove("hidden");
+    document.getElementById("avatar-initials").textContent = getInitials(adminData?.name || user.email);
+
+    const [payments, users] = await Promise.all([listPayments(), listUsers()]);
+    allPayments = payments;
+    users.forEach(u => { userMap[u.id] = u; });
+    render();
+  });
+
+  function render() {
+    const term = document.getElementById("search-input").value.trim().toLowerCase();
+    const statusFilter = document.getElementById("status-filter").value;
+
+    const filtered = allPayments.filter(p => {
+      const u = userMap[p.userId] || {};
+      const matchesTerm = !term || (p.serialNumber || u.serialNumber || "").toLowerCase().includes(term) || (p.paystackReference || "").toLowerCase().includes(term);
+      const matchesStatus = !statusFilter || p.status === statusFilter;
+      return matchesTerm && matchesStatus;
+    });
+
+    const tbody = document.getElementById("tbody");
+    const empty = document.getElementById("empty-state");
+    if (!filtered.length) { tbody.innerHTML = ""; empty.classList.remove("hidden"); return; }
+    empty.classList.add("hidden");
+
+    const badgeMap = { success: "badge-green", pending: "badge-yellow", failed: "badge-red" };
+
+    tbody.innerHTML = filtered.map(p => {
+      const u = userMap[p.userId] || {};
+      return `
+      <tr>
+        <td>${u.name || "—"}</td>
+        <td style="font-family:monospace;">${p.serialNumber || u.serialNumber || "—"}</td>
+        <td>${p.type || u.type || "—"}</td>
+        <td>${p.unitNumber || u.unitNumber || "—"}</td>
+        <td>${formatCurrency(p.amount || 0, p.currency || "NGN")}</td>
+        <td style="font-size:0.8rem; font-family:monospace;">${p.paystackReference || "—"}</td>
+        <td style="font-size:0.8rem; font-family:monospace;">${p.transactionId || "—"}</td>
+        <td>${formatDate(p.paymentDate || p.createdAt)}</td>
+        <td><span class="badge ${badgeMap[p.status] || "badge-gray"}">${(p.status || "unknown").toUpperCase()}</span></td>
+        <td>${p.receiptNumber ? `<a href="receipts.html?receipt=${p.receiptNumber}" class="btn btn-sm btn-outline">View</a>` : "—"}</td>
+      </tr>`;
+    }).join("");
+  }
+
+  document.getElementById("search-input").addEventListener("input", render);
+  document.getElementById("status-filter").addEventListener("change", render);
+</script>
+<script src="../assets/js/utils.js"></script>
+</body>
+</html>

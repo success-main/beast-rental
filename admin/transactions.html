@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Transaction History — Beast Rentals Admin</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="../assets/css/style.css">
+<link rel="stylesheet" href="../assets/css/admin.css">
+<link rel="stylesheet" href="../assets/css/responsive.css">
+</head>
+<body>
+
+<div id="page-loader" class="page-loader"><span class="brand-mark"><i class="fa-solid fa-shield-dog"></i></span><span class="spinner dark"></span></div>
+
+<div class="app-shell hidden" id="app-shell">
+  <aside class="app-sidebar">
+    <a href="../index.html" class="brand"><span class="brand-mark"><i class="fa-solid fa-shield-dog"></i></span>Beast Rentals</a>
+    <a href="dashboard.html" class="side-link"><i class="fa-solid fa-gauge"></i> Dashboard</a>
+    <a href="users.html" class="side-link"><i class="fa-solid fa-users"></i> Users</a>
+    <a href="shops.html" class="side-link"><i class="fa-solid fa-store"></i> Shops</a>
+    <a href="farms.html" class="side-link"><i class="fa-solid fa-tractor"></i> Farms</a>
+    <a href="rentals.html" class="side-link"><i class="fa-solid fa-house-chimney"></i> Rentals</a>
+    <a href="payments.html" class="side-link"><i class="fa-solid fa-credit-card"></i> Payments</a>
+    <a href="transactions.html" class="side-link active"><i class="fa-solid fa-clock-rotate-left"></i> Transactions</a>
+    <a href="receipts.html" class="side-link"><i class="fa-solid fa-receipt"></i> Receipts</a>
+    <a href="qr-management.html" class="side-link"><i class="fa-solid fa-qrcode"></i> QR Management</a>
+    <a href="qr-scanner.html" class="side-link"><i class="fa-solid fa-camera"></i> QR Scanner</a>
+    <a href="notifications.html" class="side-link"><i class="fa-solid fa-bell"></i> Notifications</a>
+    <a href="reports.html" class="side-link"><i class="fa-solid fa-chart-line"></i> Reports</a>
+    <div class="side-section-label">System</div>
+    <a href="activity-logs.html" class="side-link"><i class="fa-solid fa-list-check"></i> Activity Logs</a>
+    <a href="administrators.html" class="side-link"><i class="fa-solid fa-user-shield"></i> Administrators</a>
+    <a href="settings.html" class="side-link"><i class="fa-solid fa-gear"></i> Settings</a>
+    <a href="#" id="logout-link" class="side-link"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+  </aside>
+
+  <main class="app-main">
+    <div class="app-topbar">
+      <div style="display:flex; align-items:center; gap:14px;"><button class="mobile-menu-btn btn-icon"><i class="fa-solid fa-bars"></i></button><span class="page-title">Transaction History</span></div>
+      <div class="topbar-actions"><div class="avatar" id="avatar-initials">--</div></div>
+    </div>
+
+    <div class="app-content">
+      <div class="panel">
+        <div class="toolbar">
+          <div class="search-box"><i class="fa-solid fa-magnifying-glass"></i><input type="text" id="search-input" placeholder="Search reference, receipt, user..."></div>
+          <input type="date" id="date-from" title="From date">
+          <input type="date" id="date-to" title="To date">
+          <select id="status-filter"><option value="">All Status</option><option value="success">Success</option><option value="pending">Pending</option><option value="failed">Failed</option></select>
+          <button class="btn btn-outline" id="export-btn"><i class="fa-solid fa-file-export"></i> Export CSV</button>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Transaction ID</th><th>User</th><th>Amount</th><th>Reference</th><th>Receipt No.</th><th>Status</th><th>Date</th></tr></thead>
+            <tbody id="tbody"><tr><td colspan="7" style="text-align:center; padding:30px;"><span class="spinner dark"></span></td></tr></tbody>
+          </table>
+        </div>
+        <div id="empty-state" class="empty-state hidden"><i class="fa-solid fa-clock-rotate-left"></i><h4>No transactions found.</h4></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script type="module">
+  import { requireAdmin, logoutUser } from "../assets/js/auth.js";
+  import { listTransactions, listUsers } from "../assets/js/admin.js";
+
+  document.getElementById("logout-link").addEventListener("click", (e) => { e.preventDefault(); logoutUser(); });
+
+  let allTx = [], userMap = {}, filteredCache = [];
+
+  requireAdmin(async (user, adminData) => {
+    document.getElementById("page-loader").classList.add("hidden");
+    document.getElementById("app-shell").classList.remove("hidden");
+    document.getElementById("avatar-initials").textContent = getInitials(adminData?.name || user.email);
+
+    const [tx, users] = await Promise.all([listTransactions(), listUsers()]);
+    allTx = tx;
+    users.forEach(u => { userMap[u.id] = u; });
+    render();
+  });
+
+  function render() {
+    const term = document.getElementById("search-input").value.trim().toLowerCase();
+    const statusFilter = document.getElementById("status-filter").value;
+    const from = document.getElementById("date-from").value ? new Date(document.getElementById("date-from").value) : null;
+    const to = document.getElementById("date-to").value ? new Date(document.getElementById("date-to").value) : null;
+
+    const filtered = allTx.filter(t => {
+      const u = userMap[t.userId] || {};
+      const matchesTerm = !term || [t.paystackReference, t.receiptNumber, u.name].some(v => (v || "").toLowerCase().includes(term));
+      const matchesStatus = !statusFilter || t.status === statusFilter;
+      const d = t.createdAt?.toDate ? t.createdAt.toDate() : new Date(t.createdAt);
+      const matchesFrom = !from || d >= from;
+      const matchesTo = !to || d <= to;
+      return matchesTerm && matchesStatus && matchesFrom && matchesTo;
+    });
+    filteredCache = filtered;
+
+    const tbody = document.getElementById("tbody");
+    const empty = document.getElementById("empty-state");
+    if (!filtered.length) { tbody.innerHTML = ""; empty.classList.remove("hidden"); return; }
+    empty.classList.add("hidden");
+
+    const badgeMap = { success: "badge-green", pending: "badge-yellow", failed: "badge-red" };
+    tbody.innerHTML = filtered.map(t => {
+      const u = userMap[t.userId] || {};
+      return `
+      <tr>
+        <td>#${(t.id || "").slice(0, 8)}</td>
+        <td>${u.name || "—"}</td>
+        <td>${formatCurrency(t.amount || 0, t.currency || "NGN")}</td>
+        <td style="font-family:monospace; font-size:0.8rem;">${t.paystackReference || "—"}</td>
+        <td>${t.receiptNumber || "—"}</td>
+        <td><span class="badge ${badgeMap[t.status] || "badge-gray"}">${(t.status || "unknown").toUpperCase()}</span></td>
+        <td>${formatDate(t.createdAt)}</td>
+      </tr>`;
+    }).join("");
+  }
+
+  function exportCsv() {
+    const rows = [["Transaction ID", "User", "Amount", "Reference", "Receipt No.", "Status", "Date"]];
+    filteredCache.forEach(t => {
+      const u = userMap[t.userId] || {};
+      rows.push([t.id, u.name || "", t.amount || 0, t.paystackReference || "", t.receiptNumber || "", t.status || "", formatDate(t.createdAt)]);
+    });
+    const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "beast-rentals-transactions.csv";
+    link.click();
+  }
+
+  ["search-input"].forEach(id => document.getElementById(id).addEventListener("input", render));
+  ["status-filter", "date-from", "date-to"].forEach(id => document.getElementById(id).addEventListener("change", render));
+  document.getElementById("export-btn").addEventListener("click", exportCsv);
+</script>
+<script src="../assets/js/utils.js"></script>
+</body>
+</html>

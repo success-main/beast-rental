@@ -1,0 +1,51 @@
+/* ===================================================================
+   BEAST RENTALS — AUTH PAGE ENHANCEMENTS
+   Extends style.css. Loaded only on login/signup pages.
+=================================================================== */
+
+.auth-visual .badge-list { display: flex; gap: 10px; margin-top: 24px; flex-wrap: wrap; }
+.auth-visual .badge-list span {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  padding: 6px 14px; border-radius: var(--radius-pill); font-size: 0.78rem; color: var(--br-gray-200);
+}
+
+.type-toggle { display: flex; gap: 10px; }
+.type-toggle label {
+  flex: 1; border: 1.5px solid var(--border-subtle); border-radius: var(--radius-sm);
+  padding: 12px; text-align: center; cursor: pointer; font-size: 0.85rem; font-weight: 700;
+  color: var(--text-muted); transition: all .15s ease;
+}
+.type-toggle input { display: none; }
+.type-toggle input:checked + span { color: var(--br-green-700); }
+.type-toggle label:has(input:checked) { border-color: var(--br-green-500); background: var(--accent-soft); color: var(--br-green-700); }
+
+.serial-preview {
+  background: var(--br-black); color: var(--br-green-300);
+  font-family: 'Courier New', monospace; font-weight: 700; letter-spacing: 0.05em;
+  padding: 12px 14px; border-radius: var(--radius-sm); font-size: 0.9rem;
+  display: flex; align-items: center; justify-content: space-between;
+}
+
+.password-row { display: flex; align-items: center; gap: 10px; }
+.password-row .input-wrap { flex: 1; }
+
+/* ---------------- Social / Google sign-in ---------------- */
+.divider-or {
+  display: flex; align-items: center; gap: 14px;
+  margin: 22px 0; color: var(--text-muted); font-size: 0.8rem; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.04em;
+}
+.divider-or::before, .divider-or::after { content: ""; flex: 1; height: 1px; background: var(--border-subtle); }
+
+.btn-google {
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  width: 100%; padding: 12px 20px; border-radius: var(--radius-pill);
+  border: 1.5px solid var(--border-subtle); background: #fff; color: var(--br-black);
+  font-weight: 700; font-size: 0.94rem; cursor: pointer; transition: box-shadow .15s ease, border-color .15s ease;
+}
+.btn-google:hover { border-color: var(--br-gray-300); box-shadow: var(--shadow-sm); }
+.btn-google:disabled { opacity: 0.6; cursor: not-allowed; }
+.btn-google .google-g {
+  width: 18px; height: 18px; flex-shrink: 0;
+}

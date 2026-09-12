@@ -1,0 +1,234 @@
+/* =====================================================================
+   BEAST RENTALS — RESPONSIVE ENHANCEMENTS
+   Loaded LAST on every page (after style.css / auth.css / dashboard.css
+   / admin.css) so its rules can safely refine/override for small
+   screens without touching the base design system files.
+   Breakpoints used throughout the app: 1200 / 980 / 860 / 760 / 600 / 420
+===================================================================== */
+
+/* ---------------- Global touch & accessibility baseline ---------------- */
+html { -webkit-text-size-adjust: 100%; }
+
+button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
+
+/* Minimum comfortable tap target on touch devices */
+@media (hover: none) and (pointer: coarse) {
+  .btn-icon { width: 44px; height: 44px; }
+  .side-link, .nav-links a { min-height: 44px; }
+  .pagination button { width: 38px; height: 38px; }
+  table.data-table td, table.data-table th { padding: 14px 12px; }
+}
+
+:focus-visible {
+  outline: 2.5px solid var(--br-green-500);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Safe-area support for notched devices (iOS) */
+.app-topbar { padding-left: max(28px, env(safe-area-inset-left)); padding-right: max(28px, env(safe-area-inset-right)); }
+.site-header .container { padding-left: max(24px, env(safe-area-inset-left)); padding-right: max(24px, env(safe-area-inset-right)); }
+
+/* ---------------- Fluid containers ---------------- */
+@media (max-width: 600px) {
+  .container { padding: 0 16px; }
+  .app-content { padding: 16px; }
+  .section { padding: 56px 0; }
+}
+@media (max-width: 420px) {
+  .container { padding: 0 14px; }
+  .app-content { padding: 14px; }
+}
+
+/* ---------------- Header / nav ---------------- */
+@media (max-width: 860px) {
+  .site-header { height: 64px; }
+  .nav-links { top: 64px; }
+  .nav-actions .btn { padding: 10px 16px; font-size: 0.85rem; }
+}
+@media (max-width: 480px) {
+  .brand { font-size: 1.05rem; }
+  .brand .brand-mark { width: 32px; height: 32px; font-size: 0.95rem; }
+  .nav-actions .btn span, .nav-actions a.btn { padding: 9px 13px; font-size: 0.8rem; }
+}
+
+/* ---------------- Hero ---------------- */
+@media (max-width: 760px) {
+  .hero { padding: 64px 0 84px; }
+  .hero-actions { flex-direction: column; align-items: stretch; }
+  .hero-actions .btn { width: 100%; }
+}
+@media (max-width: 420px) {
+  .hero { padding: 48px 0 64px; }
+  .eyebrow { font-size: 0.7rem; padding: 5px 12px; }
+}
+
+/* ---------------- Feature / info grids ---------------- */
+@media (max-width: 420px) {
+  .feature-grid { grid-template-columns: 1fr; gap: 16px; }
+  .info-grid { grid-template-columns: 1fr; }
+  .stat-grid { grid-template-columns: 1fr; gap: 12px; }
+  .footer-grid { grid-template-columns: 1fr; gap: 24px; }
+  .cta-band { padding: 40px 22px; }
+}
+@media (min-width: 421px) and (max-width: 600px) {
+  .stat-grid { grid-template-columns: 1fr; }
+}
+
+/* ---------------- Countdown ---------------- */
+@media (max-width: 460px) {
+  .countdown-grid { grid-template-columns: repeat(2, 1fr); max-width: none; }
+  .rental-status-card { padding: 22px; }
+  .rs-top { flex-direction: column; align-items: flex-start; }
+}
+@media (max-width: 340px) {
+  .countdown-cell .num { font-size: 1.4rem; }
+}
+
+/* ---------------- Payment prompt banner ---------------- */
+@media (max-width: 600px) {
+  .payment-prompt-banner { flex-direction: column; align-items: stretch; text-align: left; }
+  .payment-prompt-banner > div:last-child { text-align: left; }
+  .payment-prompt-banner .fee { font-size: 1.3rem; }
+  .payment-prompt-banner .btn { width: 100%; justify-content: center; }
+}
+
+/* ---------------- App shell / sidebar ---------------- */
+@media (max-width: 980px) {
+  .app-content { max-width: 100%; }
+}
+
+.sidebar-backdrop {
+  position: fixed; inset: 0; background: rgba(11,15,13,0.5);
+  z-index: 850; opacity: 0; pointer-events: none; transition: opacity .2s ease;
+}
+.sidebar-backdrop.visible { opacity: 1; pointer-events: auto; }
+
+@media (max-width: 980px) {
+  .app-sidebar { width: 78vw; max-width: 300px; box-shadow: var(--shadow-lg); }
+}
+
+/* ---------------- Toolbars ---------------- */
+@media (max-width: 700px) {
+  .toolbar { flex-direction: column; align-items: stretch; }
+  .toolbar .search-box, .toolbar select, .toolbar button, .toolbar input[type="date"] { width: 100%; }
+}
+
+/* ---------------- Tables: horizontal scroll polish ---------------- */
+.table-wrap {
+  -webkit-overflow-scrolling: touch;
+  position: relative;
+}
+@media (max-width: 700px) {
+  table.data-table { font-size: 0.82rem; min-width: 580px; }
+  table.data-table th, table.data-table td { padding: 11px 10px; white-space: nowrap; }
+  .table-actions { flex-wrap: nowrap; }
+}
+
+/* ---------------- Modals ---------------- */
+@media (max-width: 560px) {
+  .modal-overlay { padding: 0; align-items: flex-end; }
+  .modal-box {
+    max-width: 100%; width: 100%; border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    max-height: 88vh; padding-bottom: max(24px, env(safe-area-inset-bottom));
+  }
+}
+
+/* ---------------- Toasts ---------------- */
+@media (max-width: 480px) {
+  .toast-stack { left: 16px; right: 16px; top: 16px; max-width: none; }
+  .toast { font-size: 0.84rem; }
+}
+
+/* ---------------- Auth pages ---------------- */
+@media (max-width: 480px) {
+  .auth-form-wrap { padding: 28px 18px; }
+  .auth-box .brand { margin-bottom: 20px; }
+}
+
+/* ---------------- Receipt / QR cards ---------------- */
+@media (max-width: 480px) {
+  .receipt-card { padding: 22px 18px; }
+  .receipt-row { font-size: 0.82rem; }
+  .receipt-actions { flex-direction: column; }
+  .receipt-actions .btn { width: 100%; }
+  .qr-display-box { padding: 20px; }
+  .qr-display-box canvas, .qr-display-box img { max-width: 100%; height: auto; }
+}
+
+/* ---------------- Verify page ---------------- */
+@media (max-width: 480px) {
+  .verify-card { padding: 26px 20px; }
+}
+
+/* ---------------- Admin charts ---------------- */
+@media (max-width: 700px) {
+  .grid-2-1 { grid-template-columns: 1fr; }
+  .chart-bars { height: 140px; }
+  .kpi-inline { gap: 14px; }
+  .kpi-inline .kpi { min-width: 46%; }
+}
+@media (max-width: 420px) {
+  .kpi-inline .kpi { min-width: 100%; }
+}
+
+/* ---------------- Settings tabs ---------------- */
+@media (max-width: 500px) {
+  .settings-tabs { overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; }
+  .settings-tabs button { white-space: nowrap; }
+}
+
+/* ---------------- Contact page grid (inline style override support) ---------------- */
+@media (max-width: 860px) {
+  #contact-grid { grid-template-columns: 1fr !important; }
+}
+
+/* =====================================================================
+   BOTTOM TAB BAR — user app only, mobile only (spec: "Mobile dashboard:
+   bottom navigation where appropriate"). Desktop keeps the sidebar;
+   the hamburger still opens the full sidebar for less-common pages.
+===================================================================== */
+.bottom-nav {
+  display: none;
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 400;
+  background: var(--br-black);
+  padding: 8px 6px max(8px, env(safe-area-inset-bottom));
+  align-items: stretch;
+  justify-content: space-between;
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.25);
+}
+.bottom-nav a {
+  flex: 1;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 3px; color: var(--br-gray-300); font-size: 0.66rem; font-weight: 700;
+  padding: 6px 2px; border-radius: 10px; min-height: 48px;
+}
+.bottom-nav a i { font-size: 1.05rem; }
+.bottom-nav a.active { color: #fff; background: rgba(47,181,86,0.18); }
+.bottom-nav a.bn-pay {
+  margin-top: -18px;
+  background: linear-gradient(135deg, var(--br-green-500), var(--br-green-700));
+  color: #fff; border-radius: 50%; width: 52px; height: 52px; flex: none;
+  align-self: center; box-shadow: 0 6px 16px rgba(31,138,65,0.5);
+}
+.bottom-nav a.bn-pay i { font-size: 1.2rem; }
+.bottom-nav a.bn-pay span { display: none; }
+
+@media (max-width: 760px) {
+  .bottom-nav.enabled { display: flex; }
+  body.has-bottom-nav .app-content { padding-bottom: 90px; }
+}
+
+/* ---------------- Landscape phones: tighten vertical rhythm ---------------- */
+@media (max-height: 480px) and (orientation: landscape) {
+  .hero { padding: 40px 0; }
+  .page-loader { gap: 8px; }
+}

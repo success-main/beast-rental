@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Notifications — Beast Rentals</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="../assets/css/style.css">
+<link rel="stylesheet" href="../assets/css/dashboard.css">
+<link rel="stylesheet" href="../assets/css/responsive.css">
+</head>
+<body>
+
+<div id="page-loader" class="page-loader">
+  <span class="brand-mark"><i class="fa-solid fa-shield-dog"></i></span>
+  <span class="spinner dark"></span>
+</div>
+
+<div class="app-shell hidden" id="app-shell">
+  <aside class="app-sidebar">
+    <a href="../index.html" class="brand"><span class="brand-mark"><i class="fa-solid fa-shield-dog"></i></span>Beast Rentals</a>
+    <a href="dashboard.html" class="side-link"><i class="fa-solid fa-gauge"></i> Dashboard</a>
+    <a href="rental.html" class="side-link"><i class="fa-solid fa-house-chimney"></i> My Rental</a>
+    <a href="payment.html" class="side-link"><i class="fa-solid fa-credit-card"></i> Make Payment</a>
+    <a href="transactions.html" class="side-link"><i class="fa-solid fa-clock-rotate-left"></i> Transactions</a>
+    <a href="receipts.html" class="side-link"><i class="fa-solid fa-receipt"></i> Receipts</a>
+    <a href="qr.html" class="side-link"><i class="fa-solid fa-qrcode"></i> My QR Code</a>
+    <a href="notifications.html" class="side-link active"><i class="fa-solid fa-bell"></i> Notifications</a>
+    <div class="side-section-label">Account</div>
+    <a href="profile.html" class="side-link"><i class="fa-solid fa-user"></i> My Profile</a>
+    <a href="#" id="logout-link" class="side-link"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+  </aside>
+
+  
+  <nav class="bottom-nav" id="bottom-nav">
+    <a href="dashboard.html" data-page="dashboard.html"><i class="fa-solid fa-gauge"></i><span>Home</span></a>
+    <a href="rental.html" data-page="rental.html"><i class="fa-solid fa-house-chimney"></i><span>Rental</span></a>
+    <a href="payment.html" data-page="payment.html" class="bn-pay"><i class="fa-solid fa-credit-card"></i><span>Pay</span></a>
+    <a href="receipts.html" data-page="receipts.html"><i class="fa-solid fa-receipt"></i><span>Receipts</span></a>
+    <a href="notifications.html" data-page="notifications.html"><i class="fa-solid fa-bell"></i><span>Alerts</span></a>
+  </nav>
+
+  <main class="app-main">
+    <div class="app-topbar">
+      <div style="display:flex; align-items:center; gap:14px;">
+        <button class="mobile-menu-btn btn-icon"><i class="fa-solid fa-bars"></i></button>
+        <span class="page-title">Notifications</span>
+      </div>
+      <div class="topbar-actions"><div class="avatar" id="avatar-initials">--</div></div>
+    </div>
+
+    <div class="app-content" style="max-width:720px;">
+      <div class="panel">
+        <div id="notif-list"><div style="text-align:center; padding:30px;"><span class="spinner dark"></span></div></div>
+        <div id="empty-state" class="empty-state hidden">
+          <i class="fa-solid fa-bell"></i>
+          <h4>You're all caught up.</h4>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script type="module">
+  import { requireAuth, logoutUser } from "../assets/js/auth.js";
+  import { getMyNotifications } from "../assets/js/dashboard.js";
+
+  document.getElementById("logout-link").addEventListener("click", (e) => { e.preventDefault(); logoutUser(); });
+
+  const iconMap = {
+    expiry_warning: "fa-triangle-exclamation",
+    expired: "fa-circle-xmark",
+    payment_success: "fa-circle-check",
+    receipt_ready: "fa-receipt",
+    qr_updated: "fa-qrcode"
+  };
+
+  requireAuth(async (user, profile) => {
+    document.getElementById("page-loader").classList.add("hidden");
+    document.getElementById("app-shell").classList.remove("hidden");
+    document.getElementById("avatar-initials").textContent = getInitials(profile?.name || "?");
+
+    const list = await getMyNotifications(user.uid);
+    const container = document.getElementById("notif-list");
+
+    if (!list.length) {
+      container.innerHTML = "";
+      document.getElementById("empty-state").classList.remove("hidden");
+      return;
+    }
+
+    container.innerHTML = list.map(n => `
+      <div class="notif-item ${n.read ? "" : "unread"}">
+        <div class="n-icon"><i class="fa-solid ${iconMap[n.type] || "fa-bell"}"></i></div>
+        <div class="n-body">
+          <div>${n.message || n.title || "Notification"}</div>
+          <div class="n-time">${timeAgo(n.createdAt)}</div>
+        </div>
+      </div>
+    `).join("");
+  });
+</script>
+<script src="../assets/js/utils.js"></script>
+</body>
+</html>

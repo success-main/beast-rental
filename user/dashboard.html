@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — Beast Rentals</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="../assets/css/style.css">
+<link rel="stylesheet" href="../assets/css/dashboard.css">
+<link rel="stylesheet" href="../assets/css/responsive.css">
+</head>
+<body>
+
+<div id="page-loader" class="page-loader">
+  <span class="brand-mark"><i class="fa-solid fa-shield-dog"></i></span>
+  <span class="spinner dark"></span>
+</div>
+
+<div class="app-shell hidden" id="app-shell">
+  <aside class="app-sidebar">
+    <a href="../index.html" class="brand"><span class="brand-mark"><i class="fa-solid fa-shield-dog"></i></span>Beast Rentals</a>
+    <a href="dashboard.html" class="side-link active"><i class="fa-solid fa-gauge"></i> Dashboard</a>
+    <a href="rental.html" class="side-link"><i class="fa-solid fa-house-chimney"></i> My Rental</a>
+    <a href="payment.html" class="side-link"><i class="fa-solid fa-credit-card"></i> Make Payment</a>
+    <a href="transactions.html" class="side-link"><i class="fa-solid fa-clock-rotate-left"></i> Transactions</a>
+    <a href="receipts.html" class="side-link"><i class="fa-solid fa-receipt"></i> Receipts</a>
+    <a href="qr.html" class="side-link"><i class="fa-solid fa-qrcode"></i> My QR Code</a>
+    <a href="notifications.html" class="side-link"><i class="fa-solid fa-bell"></i> Notifications</a>
+    <div class="side-section-label">Account</div>
+    <a href="profile.html" class="side-link"><i class="fa-solid fa-user"></i> My Profile</a>
+    <a href="#" id="logout-link" class="side-link"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+  </aside>
+
+  
+  <nav class="bottom-nav" id="bottom-nav">
+    <a href="dashboard.html" data-page="dashboard.html"><i class="fa-solid fa-gauge"></i><span>Home</span></a>
+    <a href="rental.html" data-page="rental.html"><i class="fa-solid fa-house-chimney"></i><span>Rental</span></a>
+    <a href="payment.html" data-page="payment.html" class="bn-pay"><i class="fa-solid fa-credit-card"></i><span>Pay</span></a>
+    <a href="receipts.html" data-page="receipts.html"><i class="fa-solid fa-receipt"></i><span>Receipts</span></a>
+    <a href="notifications.html" data-page="notifications.html"><i class="fa-solid fa-bell"></i><span>Alerts</span></a>
+  </nav>
+
+  <main class="app-main">
+    <div class="app-topbar">
+      <div style="display:flex; align-items:center; gap:14px;">
+        <button class="mobile-menu-btn btn-icon"><i class="fa-solid fa-bars"></i></button>
+        <span class="page-title">Dashboard</span>
+      </div>
+      <div class="topbar-actions">
+        <a href="notifications.html" class="btn-icon"><i class="fa-solid fa-bell"></i></a>
+        <div class="avatar" id="avatar-initials">--</div>
+      </div>
+    </div>
+
+    <div class="app-content">
+      <h2 id="welcome-msg">Welcome!</h2>
+      <p style="margin-bottom:24px;">Here's an overview of your rental.</p>
+
+      <div id="payment-prompt" class="hidden payment-prompt-banner">
+        <div>
+          <h3 style="color:#fff;">Your rental payment is due</h3>
+          <p style="color:rgba(255,255,255,0.8); margin-top:6px;" id="prompt-detail">Rental Type: — · Unit: —</p>
+        </div>
+        <div style="text-align:right;">
+          <div class="fee" id="prompt-fee">₦0</div>
+          <a href="payment.html" class="btn btn-dark" style="margin-top:10px;">Pay with Paystack <i class="fa-solid fa-arrow-right"></i></a>
+        </div>
+      </div>
+
+      <div class="rental-status-card" id="rental-card">
+        <div class="rs-top">
+          <div>
+            <div style="font-size:0.8rem; color:var(--br-gray-300); text-transform:uppercase; letter-spacing:.05em;">Rental Status</div>
+            <div style="font-size:1.4rem; font-weight:800; margin-top:4px;" id="rs-label">Loading...</div>
+          </div>
+          <span class="badge badge-dark" id="rs-type-badge">—</span>
+        </div>
+        <div class="countdown-grid" id="countdown-grid">
+          <div class="countdown-cell"><div class="num" id="cd-days">--</div><div class="lbl">Days</div></div>
+          <div class="countdown-cell"><div class="num" id="cd-hours">--</div><div class="lbl">Hours</div></div>
+          <div class="countdown-cell"><div class="num" id="cd-minutes">--</div><div class="lbl">Minutes</div></div>
+          <div class="countdown-cell"><div class="num" id="cd-seconds">--</div><div class="lbl">Seconds</div></div>
+        </div>
+      </div>
+
+      <div class="info-grid" style="margin-top:22px;">
+        <div class="info-tile"><div class="lbl">Serial Number</div><div class="val" id="info-serial">—</div></div>
+        <div class="info-tile"><div class="lbl">Type</div><div class="val" id="info-type">—</div></div>
+        <div class="info-tile"><div class="lbl">Unit Number</div><div class="val" id="info-unit">—</div></div>
+      </div>
+
+      <div class="panel" style="margin-top:22px;">
+        <div class="panel-head">
+          <h3>Quick Actions</h3>
+        </div>
+        <div style="display:flex; gap:12px; flex-wrap:wrap;">
+          <a href="payment.html" class="btn btn-primary"><i class="fa-solid fa-credit-card"></i> Make Payment</a>
+          <a href="qr.html" class="btn btn-outline"><i class="fa-solid fa-qrcode"></i> View My QR</a>
+          <a href="receipts.html" class="btn btn-outline"><i class="fa-solid fa-receipt"></i> View Receipts</a>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script type="module">
+  import { requireAuth, logoutUser } from "../assets/js/auth.js";
+  import { getSettings, watchMyRental, mountCountdown } from "../assets/js/dashboard.js";
+
+  document.getElementById("logout-link").addEventListener("click", (e) => { e.preventDefault(); logoutUser(); });
+
+  let unsubRental = null;
+  let stopCountdown = null;
+
+  requireAuth(async (user, profile) => {
+    document.getElementById("page-loader").classList.add("hidden");
+    document.getElementById("app-shell").classList.remove("hidden");
+
+    document.getElementById("welcome-msg").textContent = `Welcome, ${profile?.name || user.displayName || "there"}!`;
+    document.getElementById("avatar-initials").textContent = getInitials(profile?.name || user.displayName || "?");
+    document.getElementById("info-serial").textContent = profile?.serialNumber || "—";
+    document.getElementById("info-type").textContent = profile?.type || "—";
+    document.getElementById("info-unit").textContent = profile?.unitNumber || "—";
+    document.getElementById("rs-type-badge").textContent = profile?.type || "—";
+
+    const settings = await getSettings();
+    const thresholds = settings?.thresholds || { greenMinDays: 60, yellowMinDays: 30 };
+    const fee = settings?.annualRentalFee ?? 250;
+
+    unsubRental = watchMyRental(user.uid, (rental) => {
+      const card = document.getElementById("rental-card");
+      const promptBanner = document.getElementById("payment-prompt");
+
+      if (stopCountdown) { stopCountdown(); stopCountdown = null; }
+
+      if (!rental || !rental.expiryDate || rental.status === "pending_payment") {
+        document.getElementById("rs-label").textContent = "PAYMENT REQUIRED";
+        card.className = "rental-status-card status-red";
+        document.getElementById("countdown-grid").classList.add("hidden");
+        promptBanner.classList.remove("hidden");
+        document.getElementById("prompt-detail").textContent = `Rental Type: ${profile?.type || "—"} · Unit: ${profile?.unitNumber || "—"}`;
+        document.getElementById("prompt-fee").textContent = formatCurrency(fee, settings?.currency || "NGN");
+        return;
+      }
+
+      document.getElementById("countdown-grid").classList.remove("hidden");
+      const status = getRentalStatus(rental.expiryDate, thresholds);
+      document.getElementById("rs-label").textContent = status.level === "red" && status.daysLeft === 0 ? "EXPIRED" : status.label;
+      card.className = `rental-status-card status-${status.level === "gray" ? "yellow" : status.level}`;
+
+      if (status.level === "green") {
+        promptBanner.classList.add("hidden");
+      } else {
+        promptBanner.classList.remove("hidden");
+        document.getElementById("prompt-detail").textContent = `Rental Type: ${profile?.type || "—"} · Unit: ${profile?.unitNumber || "—"}`;
+        document.getElementById("prompt-fee").textContent = formatCurrency(fee, settings?.currency || "NGN");
+      }
+
+      stopCountdown = mountCountdown({
+        expiryDate: rental.expiryDate,
+        els: {
+          days: document.getElementById("cd-days"),
+          hours: document.getElementById("cd-hours"),
+          minutes: document.getElementById("cd-minutes"),
+          seconds: document.getElementById("cd-seconds"),
+          onExpired: () => { document.getElementById("rs-label").textContent = "EXPIRED"; }
+        }
+      });
+    });
+  });
+</script>
+<script src="../assets/js/utils.js"></script>
+</body>
+</html>

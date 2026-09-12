@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Make Payment — Beast Rentals</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="../assets/css/style.css">
+<link rel="stylesheet" href="../assets/css/dashboard.css">
+<link rel="stylesheet" href="../assets/css/responsive.css">
+</head>
+<body>
+
+<div id="page-loader" class="page-loader">
+  <span class="brand-mark"><i class="fa-solid fa-shield-dog"></i></span>
+  <span class="spinner dark"></span>
+</div>
+
+<div class="app-shell hidden" id="app-shell">
+  <aside class="app-sidebar">
+    <a href="../index.html" class="brand"><span class="brand-mark"><i class="fa-solid fa-shield-dog"></i></span>Beast Rentals</a>
+    <a href="dashboard.html" class="side-link"><i class="fa-solid fa-gauge"></i> Dashboard</a>
+    <a href="rental.html" class="side-link"><i class="fa-solid fa-house-chimney"></i> My Rental</a>
+    <a href="payment.html" class="side-link active"><i class="fa-solid fa-credit-card"></i> Make Payment</a>
+    <a href="transactions.html" class="side-link"><i class="fa-solid fa-clock-rotate-left"></i> Transactions</a>
+    <a href="receipts.html" class="side-link"><i class="fa-solid fa-receipt"></i> Receipts</a>
+    <a href="qr.html" class="side-link"><i class="fa-solid fa-qrcode"></i> My QR Code</a>
+    <a href="notifications.html" class="side-link"><i class="fa-solid fa-bell"></i> Notifications</a>
+    <div class="side-section-label">Account</div>
+    <a href="profile.html" class="side-link"><i class="fa-solid fa-user"></i> My Profile</a>
+    <a href="#" id="logout-link" class="side-link"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+  </aside>
+
+  
+  <nav class="bottom-nav" id="bottom-nav">
+    <a href="dashboard.html" data-page="dashboard.html"><i class="fa-solid fa-gauge"></i><span>Home</span></a>
+    <a href="rental.html" data-page="rental.html"><i class="fa-solid fa-house-chimney"></i><span>Rental</span></a>
+    <a href="payment.html" data-page="payment.html" class="bn-pay"><i class="fa-solid fa-credit-card"></i><span>Pay</span></a>
+    <a href="receipts.html" data-page="receipts.html"><i class="fa-solid fa-receipt"></i><span>Receipts</span></a>
+    <a href="notifications.html" data-page="notifications.html"><i class="fa-solid fa-bell"></i><span>Alerts</span></a>
+  </nav>
+
+  <main class="app-main">
+    <div class="app-topbar">
+      <div style="display:flex; align-items:center; gap:14px;">
+        <button class="mobile-menu-btn btn-icon"><i class="fa-solid fa-bars"></i></button>
+        <span class="page-title">Make Payment</span>
+      </div>
+      <div class="topbar-actions"><div class="avatar" id="avatar-initials">--</div></div>
+    </div>
+
+    <div class="app-content" style="max-width:620px;">
+      <div id="alert-slot"></div>
+
+      <div class="panel">
+        <div class="panel-head"><h3>Annual Rental Fee</h3></div>
+        <div class="info-grid" style="grid-template-columns: 1fr 1fr;">
+          <div class="info-tile"><div class="lbl">Rental Type</div><div class="val" id="pt-type">—</div></div>
+          <div class="info-tile"><div class="lbl">Unit Number</div><div class="val" id="pt-unit">—</div></div>
+        </div>
+        <div style="margin-top:20px; text-align:center; padding:24px; background:var(--br-white-soft); border-radius:var(--radius-md);">
+          <div style="font-size:0.8rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:.05em;">Amount Due</div>
+          <div style="font-size:2.2rem; font-weight:800; color: var(--br-green-700);" id="pt-amount">₦0</div>
+          <div style="font-size:0.82rem; color:var(--text-muted);" id="pt-note">Covers one year of rental validity.</div>
+        </div>
+        <button class="btn btn-primary btn-block" id="pay-btn" style="margin-top:22px;">
+          <i class="fa-brands fa-cc-visa"></i> Pay with Paystack
+        </button>
+        <p style="font-size:0.78rem; text-align:center; margin-top:14px; color:var(--text-muted);">
+          <i class="fa-solid fa-lock"></i> Payments are securely processed by Paystack and verified on our servers before your rental is activated.
+        </p>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="modal-overlay" id="verifying-modal">
+  <div class="modal-box" style="text-align:center;">
+    <span class="spinner dark" style="width:32px; height:32px; margin-bottom:16px;"></span>
+    <h3>Verifying payment...</h3>
+    <p style="margin-top:8px; font-size:0.88rem;">Please don't close this window. This only takes a moment.</p>
+  </div>
+</div>
+
+<script type="module">
+  import { requireAuth, logoutUser } from "../assets/js/auth.js";
+  import { getSettings } from "../assets/js/dashboard.js";
+  import { openPaystackCheckout, verifyAndActivateRental, generatePaymentReference } from "../assets/js/payment.js";
+
+  document.getElementById("logout-link").addEventListener("click", (e) => { e.preventDefault(); logoutUser(); });
+
+  let currentUser, currentProfile, fee = 250, currency = "NGN";
+
+  requireAuth(async (user, profile) => {
+    currentUser = user; currentProfile = profile;
+    document.getElementById("page-loader").classList.add("hidden");
+    document.getElementById("app-shell").classList.remove("hidden");
+    document.getElementById("avatar-initials").textContent = getInitials(profile?.name || "?");
+    document.getElementById("pt-type").textContent = profile?.type || "—";
+    document.getElementById("pt-unit").textContent = profile?.unitNumber || "—";
+
+    const settings = await getSettings();
+    fee = settings?.annualRentalFee ?? 250;
+    currency = settings?.currency || "NGN";
+    document.getElementById("pt-amount").textContent = formatCurrency(fee, currency);
+  });
+
+  function setAlert(message, type = "error") {
+    document.getElementById("alert-slot").innerHTML = message
+      ? `<div class="alert alert-${type}"><i class="fa-solid fa-circle-${type === "error" ? "exclamation" : "info"}"></i><span>${message}</span></div>`
+      : "";
+  }
+
+  document.getElementById("pay-btn").addEventListener("click", async () => {
+    setAlert("");
+    const btn = document.getElementById("pay-btn");
+    btn.disabled = true;
+
+    const reference = generatePaymentReference(currentProfile?.serialNumber || currentUser.uid);
+
+    try {
+      await openPaystackCheckout({
+        email: currentUser.email,
+        amountNaira: fee,
+        reference,
+        metadata: {
+          userId: currentUser.uid,
+          serialNumber: currentProfile?.serialNumber,
+          type: currentProfile?.type,
+          unitNumber: currentProfile?.unitNumber
+        }
+      });
+
+      // Popup finished — now verify server-side before treating as paid.
+      openModal("verifying-modal");
+      const result = await verifyAndActivateRental(reference);
+      closeModal("verifying-modal");
+
+      if (result?.success) {
+        showToast("Payment verified! Your rental is now active.", "success");
+        setTimeout(() => { window.location.href = "receipts.html"; }, 1200);
+      } else {
+        setAlert("Transaction could not be verified.", "error");
+      }
+    } catch (err) {
+      closeModal("verifying-modal");
+      console.error("Payment verification failed:", err);
+      if (err.message?.includes("closed")) {
+        setAlert("Payment was cancelled.", "info");
+      } else {
+        // Surface the real Firebase Functions error code — this is the
+        // difference between "Cloud Functions aren't deployed yet"
+        // (functions/not-found), "the function crashed" (functions/internal,
+        // usually a missing PAYSTACK_SECRET_KEY secret), or a genuine
+        // verification failure (functions/failed-precondition) — a plain
+        // "contact support" message hides which of these it actually is.
+        const detail = err.code || err.message || "unknown error";
+        setAlert(`Payment verification failed (${detail}). If you were charged, save this reference and contact support: ${reference}`, "error");
+      }
+    } finally {
+      btn.disabled = false;
+    }
+  });
+</script>
+<script src="../assets/js/utils.js"></script>
+</body>
+</html>

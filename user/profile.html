@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Profile — Beast Rentals</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="../assets/css/style.css">
+<link rel="stylesheet" href="../assets/css/dashboard.css">
+<link rel="stylesheet" href="../assets/css/responsive.css">
+</head>
+<body>
+
+<div id="page-loader" class="page-loader">
+  <span class="brand-mark"><i class="fa-solid fa-shield-dog"></i></span>
+  <span class="spinner dark"></span>
+</div>
+
+<div class="app-shell hidden" id="app-shell">
+  <aside class="app-sidebar">
+    <a href="../index.html" class="brand"><span class="brand-mark"><i class="fa-solid fa-shield-dog"></i></span>Beast Rentals</a>
+    <a href="dashboard.html" class="side-link"><i class="fa-solid fa-gauge"></i> Dashboard</a>
+    <a href="rental.html" class="side-link"><i class="fa-solid fa-house-chimney"></i> My Rental</a>
+    <a href="payment.html" class="side-link"><i class="fa-solid fa-credit-card"></i> Make Payment</a>
+    <a href="transactions.html" class="side-link"><i class="fa-solid fa-clock-rotate-left"></i> Transactions</a>
+    <a href="receipts.html" class="side-link"><i class="fa-solid fa-receipt"></i> Receipts</a>
+    <a href="qr.html" class="side-link"><i class="fa-solid fa-qrcode"></i> My QR Code</a>
+    <a href="notifications.html" class="side-link"><i class="fa-solid fa-bell"></i> Notifications</a>
+    <div class="side-section-label">Account</div>
+    <a href="profile.html" class="side-link active"><i class="fa-solid fa-user"></i> My Profile</a>
+    <a href="#" id="logout-link" class="side-link"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+  </aside>
+
+  
+  <nav class="bottom-nav" id="bottom-nav">
+    <a href="dashboard.html" data-page="dashboard.html"><i class="fa-solid fa-gauge"></i><span>Home</span></a>
+    <a href="rental.html" data-page="rental.html"><i class="fa-solid fa-house-chimney"></i><span>Rental</span></a>
+    <a href="payment.html" data-page="payment.html" class="bn-pay"><i class="fa-solid fa-credit-card"></i><span>Pay</span></a>
+    <a href="receipts.html" data-page="receipts.html"><i class="fa-solid fa-receipt"></i><span>Receipts</span></a>
+    <a href="notifications.html" data-page="notifications.html"><i class="fa-solid fa-bell"></i><span>Alerts</span></a>
+  </nav>
+
+  <main class="app-main">
+    <div class="app-topbar">
+      <div style="display:flex; align-items:center; gap:14px;">
+        <button class="mobile-menu-btn btn-icon"><i class="fa-solid fa-bars"></i></button>
+        <span class="page-title">My Profile</span>
+      </div>
+      <div class="topbar-actions"><div class="avatar" id="avatar-initials">--</div></div>
+    </div>
+
+    <div class="app-content" style="max-width:720px;">
+      <div class="panel">
+        <div class="profile-summary">
+          <div class="avatar" id="avatar-initials-2" style="width:56px; height:56px; font-size:1.2rem;">--</div>
+          <div>
+            <div class="name" id="p-name">—</div>
+            <div class="meta" id="p-email">—</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="alert-slot"></div>
+
+      <form class="panel" id="profile-form">
+        <h3 style="margin-bottom:18px;">Edit Profile</h3>
+        <div class="form-group">
+          <label for="name">Full Name</label>
+          <div class="input-wrap"><input type="text" id="name" required></div>
+        </div>
+        <div class="form-group">
+          <label for="phone">Phone Number</label>
+          <div class="input-wrap"><input type="tel" id="phone" required></div>
+        </div>
+        <div class="form-group">
+          <label>Email Address</label>
+          <div class="input-wrap"><input type="email" id="email" class="readonly-field" readonly></div>
+          <div class="field-hint">Manage your email through account security settings.</div>
+        </div>
+        <div class="form-group">
+          <label>Serial Number</label>
+          <div class="input-wrap"><input type="text" id="serial" class="readonly-field" readonly></div>
+          <div class="field-hint">Your serial number cannot be changed.</div>
+        </div>
+        <div class="settings-grid">
+          <div class="form-group">
+            <label>Type</label>
+            <div class="input-wrap"><input type="text" id="type" class="readonly-field" readonly></div>
+          </div>
+          <div class="form-group">
+            <label>Unit Number</label>
+            <div class="input-wrap"><input type="text" id="unit" class="readonly-field" readonly></div>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary" id="save-btn">Save Changes</button>
+      </form>
+
+      <div class="panel">
+        <h3 style="margin-bottom:14px;">Password</h3>
+        <p style="margin-bottom:16px; font-size:0.9rem;">We'll email you a secure link to reset your password.</p>
+        <button class="btn btn-outline" id="reset-pw-btn"><i class="fa-solid fa-key"></i> Send Password Reset Email</button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script type="module">
+  import { requireAuth, logoutUser } from "../assets/js/auth.js";
+  import { resetPassword } from "../assets/js/auth.js";
+  import { db, auth } from "../assets/js/firebase-config.js";
+  import { doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import { updateProfile } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+  document.getElementById("logout-link").addEventListener("click", (e) => { e.preventDefault(); logoutUser(); });
+
+  let currentUser = null;
+
+  requireAuth((user, profile) => {
+    currentUser = user;
+    document.getElementById("page-loader").classList.add("hidden");
+    document.getElementById("app-shell").classList.remove("hidden");
+
+    const initials = getInitials(profile?.name || "?");
+    document.getElementById("avatar-initials").textContent = initials;
+    document.getElementById("avatar-initials-2").textContent = initials;
+    document.getElementById("p-name").textContent = profile?.name || "—";
+    document.getElementById("p-email").textContent = profile?.email || user.email;
+
+    document.getElementById("name").value = profile?.name || "";
+    document.getElementById("phone").value = profile?.phone || "";
+    document.getElementById("email").value = profile?.email || user.email || "";
+    document.getElementById("serial").value = profile?.serialNumber || "";
+    document.getElementById("type").value = profile?.type || "";
+    document.getElementById("unit").value = profile?.unitNumber || "";
+  });
+
+  document.getElementById("profile-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById("save-btn");
+    btn.disabled = true;
+    btn.innerHTML = `<span class="spinner"></span> Saving...`;
+    try {
+      const name = document.getElementById("name").value.trim();
+      const phone = document.getElementById("phone").value.trim();
+      // Only permitted, non-sensitive profile fields are editable —
+      // serial number, type and unit number remain read-only per spec.
+      await updateDoc(doc(db, "users", currentUser.uid), { name, phone });
+      await updateProfile(auth.currentUser, { displayName: name });
+      showToast("Profile updated.", "success");
+    } catch (err) {
+      showToast("Could not save changes.", "error");
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Save Changes";
+    }
+  });
+
+  document.getElementById("reset-pw-btn").addEventListener("click", async () => {
+    try {
+      await resetPassword(currentUser.email);
+      showToast("Password reset email sent.", "success");
+    } catch {
+      showToast("Could not send reset email.", "error");
+    }
+  });
+</script>
+<script src="../assets/js/utils.js"></script>
+</body>
+</html>

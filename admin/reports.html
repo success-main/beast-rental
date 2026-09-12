@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reports — Beast Rentals Admin</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="../assets/css/style.css">
+<link rel="stylesheet" href="../assets/css/admin.css">
+<link rel="stylesheet" href="../assets/css/responsive.css">
+</head>
+<body>
+
+<div id="page-loader" class="page-loader"><span class="brand-mark"><i class="fa-solid fa-shield-dog"></i></span><span class="spinner dark"></span></div>
+
+<div class="app-shell hidden" id="app-shell">
+  <aside class="app-sidebar">
+    <a href="../index.html" class="brand"><span class="brand-mark"><i class="fa-solid fa-shield-dog"></i></span>Beast Rentals</a>
+    <a href="dashboard.html" class="side-link"><i class="fa-solid fa-gauge"></i> Dashboard</a>
+    <a href="users.html" class="side-link"><i class="fa-solid fa-users"></i> Users</a>
+    <a href="shops.html" class="side-link"><i class="fa-solid fa-store"></i> Shops</a>
+    <a href="farms.html" class="side-link"><i class="fa-solid fa-tractor"></i> Farms</a>
+    <a href="rentals.html" class="side-link"><i class="fa-solid fa-house-chimney"></i> Rentals</a>
+    <a href="payments.html" class="side-link"><i class="fa-solid fa-credit-card"></i> Payments</a>
+    <a href="transactions.html" class="side-link"><i class="fa-solid fa-clock-rotate-left"></i> Transactions</a>
+    <a href="receipts.html" class="side-link"><i class="fa-solid fa-receipt"></i> Receipts</a>
+    <a href="qr-management.html" class="side-link"><i class="fa-solid fa-qrcode"></i> QR Management</a>
+    <a href="qr-scanner.html" class="side-link"><i class="fa-solid fa-camera"></i> QR Scanner</a>
+    <a href="notifications.html" class="side-link"><i class="fa-solid fa-bell"></i> Notifications</a>
+    <a href="reports.html" class="side-link active"><i class="fa-solid fa-chart-line"></i> Reports</a>
+    <div class="side-section-label">System</div>
+    <a href="activity-logs.html" class="side-link"><i class="fa-solid fa-list-check"></i> Activity Logs</a>
+    <a href="administrators.html" class="side-link"><i class="fa-solid fa-user-shield"></i> Administrators</a>
+    <a href="settings.html" class="side-link"><i class="fa-solid fa-gear"></i> Settings</a>
+    <a href="#" id="logout-link" class="side-link"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+  </aside>
+
+  <main class="app-main">
+    <div class="app-topbar">
+      <div style="display:flex; align-items:center; gap:14px;"><button class="mobile-menu-btn btn-icon"><i class="fa-solid fa-bars"></i></button><span class="page-title">Reports</span></div>
+      <div class="topbar-actions"><div class="avatar" id="avatar-initials">--</div></div>
+    </div>
+
+    <div class="app-content">
+      <div class="toolbar">
+        <select id="range-select">
+          <option value="7">Last 7 Days</option>
+          <option value="14" selected>Last 14 Days</option>
+          <option value="30">Last 30 Days</option>
+          <option value="90">Last 90 Days</option>
+        </select>
+      </div>
+
+      <div class="kpi-inline panel">
+        <div class="kpi"><div class="v" id="k-total">—</div><div class="l">Total Revenue (range)</div></div>
+        <div class="kpi"><div class="v" id="k-success">—</div><div class="l">Successful Payments</div></div>
+        <div class="kpi"><div class="v" id="k-failed">—</div><div class="l">Failed Payments</div></div>
+        <div class="kpi"><div class="v" id="k-regs">—</div><div class="l">New Registrations</div></div>
+      </div>
+
+      <div class="chart-card">
+        <div class="panel-head"><h3>Revenue Trend</h3></div>
+        <div class="chart-bars" id="revenue-chart"></div>
+      </div>
+
+      <div class="grid-2-1" style="margin-top:20px;">
+        <div class="chart-card">
+          <div class="panel-head"><h3>Registrations</h3></div>
+          <div class="chart-bars" id="reg-chart"></div>
+        </div>
+        <div class="chart-card">
+          <div class="panel-head"><h3>Occupancy</h3></div>
+          <div style="display:flex; flex-direction:column; gap:14px; margin-top:6px;">
+            <div>
+              <div style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:6px;"><span>Shop Occupancy</span><span id="shop-occ-label">—</span></div>
+              <div style="background:var(--br-gray-100); border-radius:6px; height:10px;"><div id="shop-occ-bar" style="height:10px; border-radius:6px; background:var(--br-green-500); width:0%;"></div></div>
+            </div>
+            <div>
+              <div style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:6px;"><span>Farm Occupancy</span><span id="farm-occ-label">—</span></div>
+              <div style="background:var(--br-gray-100); border-radius:6px; height:10px;"><div id="farm-occ-bar" style="height:10px; border-radius:6px; background:var(--br-green-700); width:0%;"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script type="module">
+  import { requireAdmin, logoutUser } from "../assets/js/auth.js";
+  import { getRevenueSeries, listPayments, listUsers, listShops, listFarms } from "../assets/js/admin.js";
+
+  document.getElementById("logout-link").addEventListener("click", (e) => { e.preventDefault(); logoutUser(); });
+
+  let payments = [], users = [], shops = [], farms = [];
+
+  requireAdmin(async (user, adminData) => {
+    document.getElementById("page-loader").classList.add("hidden");
+    document.getElementById("app-shell").classList.remove("hidden");
+    document.getElementById("avatar-initials").textContent = getInitials(adminData?.name || user.email);
+
+    [payments, users, shops, farms] = await Promise.all([listPayments(1000), listUsers(1000), listShops(), listFarms()]);
+    await renderAll();
+  });
+
+  async function renderAll() {
+    const days = parseInt(document.getElementById("range-select").value, 10);
+    const series = await getRevenueSeries(days);
+    const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - days);
+
+    const inRange = payments.filter(p => {
+      const d = p.createdAt?.toDate ? p.createdAt.toDate() : new Date(p.createdAt);
+      return d >= cutoff;
+    });
+    const success = inRange.filter(p => p.status === "success");
+    const failed = inRange.filter(p => p.status === "failed");
+    const totalRevenue = success.reduce((sum, p) => sum + (p.amount || 0), 0);
+
+    const newRegs = users.filter(u => {
+      const d = u.createdAt?.toDate ? u.createdAt.toDate() : new Date(u.createdAt);
+      return d >= cutoff;
+    });
+
+    document.getElementById("k-total").textContent = formatCurrency(totalRevenue);
+    document.getElementById("k-success").textContent = success.length;
+    document.getElementById("k-failed").textContent = failed.length;
+    document.getElementById("k-regs").textContent = newRegs.length;
+
+    const max = Math.max(...series.map(s => s.amount), 1);
+    document.getElementById("revenue-chart").innerHTML = series.map(s => `
+      <div class="bar-col"><div class="bar" style="height:${(s.amount / max) * 100}%;" title="${formatCurrency(s.amount)}"></div><div class="bar-label">${s.date.slice(5)}</div></div>
+    `).join("");
+
+    // Registrations per day (reuse same date buckets)
+    const regBuckets = {};
+    series.forEach(s => regBuckets[s.date] = 0);
+    newRegs.forEach(u => {
+      const d = u.createdAt?.toDate ? u.createdAt.toDate() : new Date(u.createdAt);
+      const key = new Date(d.getFullYear(), d.getMonth(), d.getDate()).toISOString().slice(0, 10);
+      if (key in regBuckets) regBuckets[key]++;
+    });
+    const regMax = Math.max(...Object.values(regBuckets), 1);
+    document.getElementById("reg-chart").innerHTML = Object.entries(regBuckets).map(([date, count]) => `
+      <div class="bar-col"><div class="bar" style="height:${(count / regMax) * 100}%; background:linear-gradient(180deg,var(--br-green-300),var(--br-green-700));" title="${count}"></div><div class="bar-label">${date.slice(5)}</div></div>
+    `).join("");
+
+    const shopOcc = shops.length ? Math.round((shops.filter(s => s.status === "occupied").length / shops.length) * 100) : 0;
+    const farmOcc = farms.length ? Math.round((farms.filter(f => f.status === "occupied").length / farms.length) * 100) : 0;
+    document.getElementById("shop-occ-label").textContent = `${shopOcc}%`;
+    document.getElementById("shop-occ-bar").style.width = `${shopOcc}%`;
+    document.getElementById("farm-occ-label").textContent = `${farmOcc}%`;
+    document.getElementById("farm-occ-bar").style.width = `${farmOcc}%`;
+  }
+
+  document.getElementById("range-select").addEventListener("change", renderAll);
+</script>
+<script src="../assets/js/utils.js"></script>
+</body>
+</html>

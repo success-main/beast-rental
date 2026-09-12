@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Register — Beast Rentals</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="assets/css/style.css">
+<link rel="stylesheet" href="assets/css/auth.css">
+<link rel="stylesheet" href="assets/css/responsive.css">
+</head>
+<body>
+
+<div class="auth-shell">
+  <div class="auth-visual">
+    <div class="content">
+      <a href="index.html" class="brand" style="color:#fff;"><span class="brand-mark"><i class="fa-solid fa-shield-dog"></i></span>Beast Rentals</a>
+      <h2 style="margin-top:26px; color:#fff;">Join Beast Rentals.</h2>
+      <p style="color:var(--br-gray-300); margin-top:10px;">Register your shop or farm rental and get a unique serial number instantly.</p>
+      <div class="badge-list">
+        <span><i class="fa-solid fa-hashtag"></i> Unique Serial Number</span>
+        <span><i class="fa-solid fa-qrcode"></i> QR Identity</span>
+        <span><i class="fa-solid fa-receipt"></i> Digital Receipts</span>
+        <span><i class="fa-solid fa-shield-halved"></i> Secure by Firebase</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="auth-form-wrap">
+    <div class="auth-box">
+      <a href="index.html" class="brand"><span class="brand-mark"><i class="fa-solid fa-shield-dog"></i></span>Beast Rentals</a>
+      <h2>Create your account</h2>
+      <p class="sub">Register as a Shop or Farm tenant.</p>
+
+      <div id="alert-slot"></div>
+
+      <form id="signup-form">
+        <div class="form-group">
+          <label for="name">Full Name</label>
+          <div class="input-wrap has-icon">
+            <i class="fa-solid fa-user leading"></i>
+            <input type="text" id="name" required placeholder="John Michael" autocomplete="name">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Type</label>
+          <div class="type-toggle">
+            <label><input type="radio" name="type" value="SHOP" checked><span><i class="fa-solid fa-store"></i> Shop</span></label>
+            <label><input type="radio" name="type" value="FARM"><span><i class="fa-solid fa-tractor"></i> Farm</span></label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="unitNumber" id="unit-label">Shop Number</label>
+          <div class="input-wrap has-icon">
+            <i class="fa-solid fa-hashtag leading"></i>
+            <input type="text" id="unitNumber" required placeholder="e.g. 24">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="phone">Phone Number</label>
+          <div class="input-wrap has-icon">
+            <i class="fa-solid fa-phone leading"></i>
+            <input type="tel" id="phone" required placeholder="+234 800 000 0000" autocomplete="tel">
+          </div>
+          <div class="field-error" id="phone-error">Enter a valid phone number.</div>
+        </div>
+
+        <div class="form-group">
+          <label for="email">Email Address</label>
+          <div class="input-wrap has-icon">
+            <i class="fa-solid fa-envelope leading"></i>
+            <input type="email" id="email" required placeholder="you@example.com" autocomplete="email">
+          </div>
+          <div class="field-error" id="email-error">Enter a valid email address.</div>
+        </div>
+
+        <div class="form-group">
+          <label for="password">Password</label>
+          <div class="input-wrap has-icon">
+            <i class="fa-solid fa-lock leading"></i>
+            <input type="password" id="password" required placeholder="Create a strong password" autocomplete="new-password" minlength="8">
+            <button type="button" class="toggle-pass" data-target="password"><i class="fa-solid fa-eye"></i></button>
+          </div>
+          <div class="strength-meter" id="strength-meter" data-level="0">
+            <span></span><span></span><span></span><span></span>
+          </div>
+          <div class="field-hint">At least 8 characters, with uppercase, a number and a symbol for best strength.</div>
+        </div>
+
+        <div class="form-group">
+          <label for="confirmPassword">Confirm Password</label>
+          <div class="input-wrap has-icon">
+            <i class="fa-solid fa-lock leading"></i>
+            <input type="password" id="confirmPassword" required placeholder="Re-enter your password" autocomplete="new-password">
+            <button type="button" class="toggle-pass" data-target="confirmPassword"><i class="fa-solid fa-eye"></i></button>
+          </div>
+          <div class="field-error" id="confirm-error">Passwords do not match.</div>
+        </div>
+
+        <div class="form-group">
+          <label>Serial Number</label>
+          <div class="serial-preview"><span>Generated automatically after registration</span><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+        </div>
+
+        <button type="submit" id="signup-btn" class="btn btn-primary btn-block">
+          <span id="signup-btn-label">Create Account</span>
+        </button>
+      </form>
+
+      <div class="divider-or">or</div>
+
+      <button type="button" id="google-btn" class="btn-google">
+        <svg class="google-g" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+          <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12s5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/>
+          <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/>
+          <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/>
+          <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/>
+        </svg>
+        <span id="google-btn-label">Continue with Google</span>
+      </button>
+
+      <div class="form-footer-link">Already have an account? <a href="login.html">Sign In</a></div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { registerUser, signInWithGoogle } from "./assets/js/auth.js";
+  import { auth, db } from "./assets/js/firebase-config.js";
+  import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const form = document.getElementById("signup-form");
+  const alertSlot = document.getElementById("alert-slot");
+  const btn = document.getElementById("signup-btn");
+  const btnLabel = document.getElementById("signup-btn-label");
+  const unitLabel = document.getElementById("unit-label");
+  const unitInput = document.getElementById("unitNumber");
+
+  document.querySelectorAll('input[name="type"]').forEach(r => {
+    r.addEventListener("change", () => {
+      const isShop = document.querySelector('input[name="type"]:checked').value === "SHOP";
+      unitLabel.textContent = isShop ? "Shop Number" : "Farm Number";
+      unitInput.placeholder = isShop ? "e.g. 24" : "e.g. F-12";
+    });
+  });
+
+  document.querySelectorAll(".toggle-pass").forEach(btnEl => {
+    btnEl.addEventListener("click", () => {
+      const target = document.getElementById(btnEl.dataset.target);
+      const show = target.type === "password";
+      target.type = show ? "text" : "password";
+      btnEl.querySelector("i").className = show ? "fa-solid fa-eye-slash" : "fa-solid fa-eye";
+    });
+  });
+
+  const pwInput = document.getElementById("password");
+  const meter = document.getElementById("strength-meter");
+  pwInput.addEventListener("input", () => {
+    meter.setAttribute("data-level", passwordStrength(pwInput.value));
+  });
+
+  function setAlert(message, type = "error") {
+    alertSlot.innerHTML = message
+      ? `<div class="alert alert-${type}"><i class="fa-solid fa-circle-${type === "error" ? "exclamation" : "info"}"></i><span>${message}</span></div>`
+      : "";
+  }
+
+  function friendlyAuthError(err) {
+    const code = err?.code || "";
+    const map = {
+      "auth/email-already-in-use": "Email already registered.",
+      "auth/invalid-email": "Enter a valid email address.",
+      "auth/weak-password": "Password is too weak. Use at least 8 characters.",
+    };
+    if (map[code]) return map[code];
+    // Unrecognized error — surface the actual code/message instead of a
+    // generic "something went wrong", so this is actually diagnosable.
+    // Common causes here: Firestore rules not yet deployed/published,
+    // or the Firestore database not created in the Firebase Console.
+    const detail = code || err?.message || "unknown error";
+    return `Something went wrong (${detail}). Please try again.`;
+  }
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    setAlert("");
+
+    const name = document.getElementById("name").value.trim();
+    const type = document.querySelector('input[name="type"]:checked').value;
+    const unitNumber = unitInput.value.trim();
+    const phone = document.getElementById("phone").value.trim();
+    const email = document.getElementById("email").value.trim();
+    const password = pwInput.value;
+    const confirmPassword = document.getElementById("confirmPassword").value;
+
+    let valid = true;
+    document.getElementById("phone-error").style.display = "none";
+    document.getElementById("phone").closest(".form-group").classList.remove("error");
+    document.getElementById("email-error").style.display = "none";
+    document.getElementById("email").closest(".form-group").classList.remove("error");
+    document.getElementById("confirm-error").style.display = "none";
+    document.getElementById("confirmPassword").closest(".form-group").classList.remove("error");
+
+    if (!isValidPhone(phone)) {
+      document.getElementById("phone").closest(".form-group").classList.add("error");
+      valid = false;
+    }
+    if (!isValidEmail(email)) {
+      document.getElementById("email").closest(".form-group").classList.add("error");
+      valid = false;
+    }
+    if (password !== confirmPassword) {
+      document.getElementById("confirmPassword").closest(".form-group").classList.add("error");
+      valid = false;
+    }
+    if (!valid) { setAlert("Please fix the highlighted fields."); return; }
+
+    btn.disabled = true;
+    btnLabel.innerHTML = `<span class="spinner"></span> Creating account...`;
+
+    try {
+      const { serial } = await registerUser({ name, type, unitNumber, phone, email, password });
+      setAlert(`Account created! Your serial number is ${serial}. Redirecting...`, "success");
+      setTimeout(() => { window.location.href = "user/dashboard.html"; }, 1400);
+    } catch (err) {
+      console.error("Signup failed:", err);
+      setAlert(friendlyAuthError(err));
+      btn.disabled = false;
+      btnLabel.textContent = "Create Account";
+    }
+  });
+
+  document.getElementById("google-btn").addEventListener("click", async () => {
+    setAlert("");
+    const gBtn = document.getElementById("google-btn");
+    const gLabel = document.getElementById("google-btn-label");
+    gBtn.disabled = true;
+    gLabel.textContent = "Signing in...";
+
+    try {
+      const { isNewUser } = await signInWithGoogle();
+      if (isNewUser) {
+        // Google gives us name/email but not Type/Unit Number/Phone —
+        // collect those on a short follow-up step before the account
+        // is usable.
+        window.location.href = "complete-profile.html";
+        return;
+      }
+      // Already-registered account signing in via Google — go straight in.
+      const adminSnap = await getDoc(doc(db, "admins", auth.currentUser.uid));
+      window.location.href = adminSnap.exists() ? "admin/dashboard.html" : "user/dashboard.html";
+    } catch (err) {
+      if (err.code !== "auth/popup-closed-by-user") {
+        setAlert("Could not sign up with Google. Please try again.");
+      }
+      gBtn.disabled = false;
+      gLabel.textContent = "Continue with Google";
+    }
+  });
+</script>
+<script src="assets/js/utils.js"></script>
+</body>
+</html>

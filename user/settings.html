@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Settings — Beast Rentals</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="../assets/css/style.css">
+<link rel="stylesheet" href="../assets/css/dashboard.css">
+<link rel="stylesheet" href="../assets/css/responsive.css">
+</head>
+<body>
+
+<div id="page-loader" class="page-loader">
+  <span class="brand-mark"><i class="fa-solid fa-shield-dog"></i></span>
+  <span class="spinner dark"></span>
+</div>
+
+<div class="app-shell hidden" id="app-shell">
+  <aside class="app-sidebar">
+    <a href="../index.html" class="brand"><span class="brand-mark"><i class="fa-solid fa-shield-dog"></i></span>Beast Rentals</a>
+    <a href="dashboard.html" class="side-link"><i class="fa-solid fa-gauge"></i> Dashboard</a>
+    <a href="rental.html" class="side-link"><i class="fa-solid fa-house-chimney"></i> My Rental</a>
+    <a href="payment.html" class="side-link"><i class="fa-solid fa-credit-card"></i> Make Payment</a>
+    <a href="transactions.html" class="side-link"><i class="fa-solid fa-clock-rotate-left"></i> Transactions</a>
+    <a href="receipts.html" class="side-link"><i class="fa-solid fa-receipt"></i> Receipts</a>
+    <a href="qr.html" class="side-link"><i class="fa-solid fa-qrcode"></i> My QR Code</a>
+    <a href="notifications.html" class="side-link"><i class="fa-solid fa-bell"></i> Notifications</a>
+    <div class="side-section-label">Account</div>
+    <a href="profile.html" class="side-link"><i class="fa-solid fa-user"></i> My Profile</a>
+    <a href="settings.html" class="side-link active"><i class="fa-solid fa-gear"></i> Settings</a>
+    <a href="#" id="logout-link" class="side-link"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+  </aside>
+
+  
+  <nav class="bottom-nav" id="bottom-nav">
+    <a href="dashboard.html" data-page="dashboard.html"><i class="fa-solid fa-gauge"></i><span>Home</span></a>
+    <a href="rental.html" data-page="rental.html"><i class="fa-solid fa-house-chimney"></i><span>Rental</span></a>
+    <a href="payment.html" data-page="payment.html" class="bn-pay"><i class="fa-solid fa-credit-card"></i><span>Pay</span></a>
+    <a href="receipts.html" data-page="receipts.html"><i class="fa-solid fa-receipt"></i><span>Receipts</span></a>
+    <a href="notifications.html" data-page="notifications.html"><i class="fa-solid fa-bell"></i><span>Alerts</span></a>
+  </nav>
+
+  <main class="app-main">
+    <div class="app-topbar">
+      <div style="display:flex; align-items:center; gap:14px;">
+        <button class="mobile-menu-btn btn-icon"><i class="fa-solid fa-bars"></i></button>
+        <span class="page-title">Settings</span>
+      </div>
+      <div class="topbar-actions"><div class="avatar" id="avatar-initials">--</div></div>
+    </div>
+
+    <div class="app-content" style="max-width:620px;">
+      <div class="panel">
+        <div class="panel-head"><h3>Notification Preferences</h3></div>
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid var(--border-subtle);">
+          <div><strong>Expiry Reminders</strong><p style="font-size:0.82rem;">Get notified at 60, 30 and 7 days before expiry.</p></div>
+          <label style="display:flex; align-items:center;"><input type="checkbox" checked id="pref-expiry"></label>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid var(--border-subtle);">
+          <div><strong>Payment Confirmations</strong><p style="font-size:0.82rem;">Get notified when a payment is verified.</p></div>
+          <label style="display:flex; align-items:center;"><input type="checkbox" checked id="pref-payment"></label>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 0;">
+          <div><strong>Receipt Ready Alerts</strong><p style="font-size:0.82rem;">Get notified when a new receipt is generated.</p></div>
+          <label style="display:flex; align-items:center;"><input type="checkbox" checked id="pref-receipt"></label>
+        </div>
+        <button class="btn btn-primary" id="save-prefs-btn" style="margin-top:20px;">Save Preferences</button>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><h3>Danger Zone</h3></div>
+        <p style="margin-bottom:14px; font-size:0.9rem;">Need help with your account? Contact support rather than attempting to delete data yourself — rental and payment records must be preserved for verification purposes.</p>
+        <a href="../contact.html" class="btn btn-outline">Contact Support</a>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script type="module">
+  import { requireAuth, logoutUser } from "../assets/js/auth.js";
+  import { db } from "../assets/js/firebase-config.js";
+  import { doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  document.getElementById("logout-link").addEventListener("click", (e) => { e.preventDefault(); logoutUser(); });
+
+  let currentUser;
+
+  requireAuth(async (user, profile) => {
+    currentUser = user;
+    document.getElementById("page-loader").classList.add("hidden");
+    document.getElementById("app-shell").classList.remove("hidden");
+    document.getElementById("avatar-initials").textContent = getInitials(profile?.name || "?");
+
+    const prefSnap = await getDoc(doc(db, "users", user.uid, "meta", "preferences"));
+    if (prefSnap.exists()) {
+      const p = prefSnap.data();
+      document.getElementById("pref-expiry").checked = p.expiryReminders !== false;
+      document.getElementById("pref-payment").checked = p.paymentConfirmations !== false;
+      document.getElementById("pref-receipt").checked = p.receiptAlerts !== false;
+    }
+  });
+
+  document.getElementById("save-prefs-btn").addEventListener("click", async () => {
+    const prefs = {
+      expiryReminders: document.getElementById("pref-expiry").checked,
+      paymentConfirmations: document.getElementById("pref-payment").checked,
+      receiptAlerts: document.getElementById("pref-receipt").checked
+    };
+    try {
+      await setDoc(doc(db, "users", currentUser.uid, "meta", "preferences"), prefs, { merge: true });
+      showToast("Preferences saved.", "success");
+    } catch {
+      showToast("Could not save preferences.", "error");
+    }
+  });
+</script>
+<script src="../assets/js/utils.js"></script>
+</body>
+</html>

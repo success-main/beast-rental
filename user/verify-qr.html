@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Verify Receipt / QR — Beast Rentals</title>
+<meta name="description" content="Verify the authenticity of a Beast Rentals receipt or QR code.">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="../assets/css/style.css">
+<link rel="stylesheet" href="../assets/css/responsive.css">
+</head>
+<body>
+
+<div class="verify-shell">
+  <div class="verify-card" id="verify-card">
+
+    <div id="start-state">
+      <a href="../index.html" class="brand" style="justify-content:center; margin-bottom:20px;"><span class="brand-mark"><i class="fa-solid fa-shield-dog"></i></span>Beast Rentals</a>
+      <h2>Verify a Receipt or QR</h2>
+      <p style="margin:10px 0 24px;">Scan a QR code or enter a receipt number to confirm authenticity.</p>
+
+      <div id="qr-reader" class="hidden"></div>
+      <button class="btn btn-primary btn-block" id="scan-btn"><i class="fa-solid fa-camera"></i> Scan QR Code</button>
+
+      <div class="divider"></div>
+
+      <form id="lookup-form">
+        <div class="form-group" style="text-align:left;">
+          <label for="receipt-input">Receipt Number</label>
+          <div class="input-wrap"><input type="text" id="receipt-input" placeholder="BR-RCP-2026-000001"></div>
+        </div>
+        <button type="submit" class="btn btn-outline btn-block">Verify Receipt Number</button>
+      </form>
+    </div>
+
+    <div id="loading-state" class="hidden">
+      <span class="spinner dark" style="width:36px; height:36px;"></span>
+      <h3 style="margin-top:16px;">Verifying...</h3>
+    </div>
+
+    <div id="valid-state" class="hidden">
+      <div class="verify-icon ok"><i class="fa-solid fa-check"></i></div>
+      <h2>✓ VERIFIED</h2>
+      <p style="margin:6px 0 20px;">BEAST RENTALS</p>
+      <div style="text-align:left; background:var(--br-white-soft); border-radius:var(--radius-md); padding:18px;">
+        <div class="receipt-row"><span class="label">Serial</span><span class="value" id="v-serial">—</span></div>
+        <div class="receipt-row"><span class="label">Type</span><span class="value" id="v-type">—</span></div>
+        <div class="receipt-row"><span class="label">Unit No.</span><span class="value" id="v-unit">—</span></div>
+        <div class="receipt-row"><span class="label">Rental Status</span><span class="value" id="v-status">—</span></div>
+        <div class="receipt-row" style="border-bottom:none;"><span class="label">Expiry</span><span class="value" id="v-expiry">—</span></div>
+      </div>
+      <button class="btn btn-outline btn-block" style="margin-top:20px;" id="reset-btn-1">Verify Another</button>
+    </div>
+
+    <div id="invalid-state" class="hidden">
+      <div class="verify-icon fail"><i class="fa-solid fa-xmark"></i></div>
+      <h2 id="invalid-title">✕ NOT FOUND</h2>
+      <p style="margin-top:8px;" id="invalid-msg">This record could not be verified.</p>
+      <button class="btn btn-outline btn-block" style="margin-top:20px;" id="reset-btn-2">Try Again</button>
+    </div>
+
+  </div>
+</div>
+
+<script type="module">
+  import { verifyReceiptPublicly } from "../assets/js/receipt.js";
+  import { startQrScanner, stopQrScanner, verifyQrToken } from "../assets/js/qr.js";
+
+  function showState(id) {
+    ["start-state", "loading-state", "valid-state", "invalid-state"].forEach(s => document.getElementById(s).classList.toggle("hidden", s !== id));
+  }
+
+  function renderResult(data) {
+    if (data && data.valid) {
+      document.getElementById("v-serial").textContent = data.serialNumber || "—";
+      document.getElementById("v-type").textContent = data.type || "—";
+      document.getElementById("v-unit").textContent = data.unitNumber || "—";
+      document.getElementById("v-status").textContent = data.rentalStatus || "—";
+      document.getElementById("v-expiry").textContent = formatDate(data.expiryDate);
+      showState("valid-state");
+    } else {
+      document.getElementById("invalid-title").textContent = "✕ RECEIPT NOT FOUND";
+      document.getElementById("invalid-msg").textContent = "This rental record could not be verified.";
+      showState("invalid-state");
+    }
+  }
+
+  let scannerInstance = null;
+
+  document.getElementById("scan-btn").addEventListener("click", async () => {
+    const reader = document.getElementById("qr-reader");
+    reader.classList.remove("hidden");
+    document.getElementById("scan-btn").classList.add("hidden");
+    try {
+      scannerInstance = await startQrScanner("qr-reader", async (token) => {
+        await stopQrScanner(scannerInstance);
+        showState("loading-state");
+        try {
+          const data = await verifyQrToken(token);
+          renderResult(data);
+        } catch {
+          renderResult({ valid: false });
+        }
+      });
+    } catch (err) {
+      showToast("Could not access camera. Use manual lookup instead.", "error");
+      reader.classList.add("hidden");
+      document.getElementById("scan-btn").classList.remove("hidden");
+    }
+  });
+
+  document.getElementById("lookup-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const receiptNumber = document.getElementById("receipt-input").value.trim();
+    if (!receiptNumber) return;
+    showState("loading-state");
+    try {
+      const data = await verifyReceiptPublicly({ receiptNumber });
+      renderResult(data);
+    } catch {
+      renderResult({ valid: false });
+    }
+  });
+
+  function reset() { showState("start-state"); }
+  document.getElementById("reset-btn-1").addEventListener("click", reset);
+  document.getElementById("reset-btn-2").addEventListener("click", reset);
+
+  // Support deep-linking e.g. verify-qr.html?receipt=BR-RCP-2026-000001
+  const preset = getQueryParam("receipt");
+  if (preset) {
+    document.getElementById("receipt-input").value = preset;
+    document.getElementById("lookup-form").dispatchEvent(new Event("submit", { cancelable: true }));
+  }
+</script>
+<script src="../assets/js/utils.js"></script>
+</body>
+</html>

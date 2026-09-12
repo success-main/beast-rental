@@ -1,0 +1,59 @@
+rules_version = '2';
+
+// =====================================================================
+// BEAST RENTALS — FIREBASE STORAGE SECURITY RULES
+// =====================================================================
+// Per master spec section 53: secure upload paths, validate file
+// types, limit file sizes, restrict access, never expose private
+// files publicly unless intentionally required.
+// =====================================================================
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isSignedIn() { return request.auth != null; }
+    function isOwner(userId) { return isSignedIn() && request.auth.uid == userId; }
+    // No custom claims in this architecture — checks the admins/{uid}
+    // Firestore document directly via Storage's cross-service
+    // firestore.exists() helper.
+    function isAdmin() {
+      return isSignedIn() &&
+        firestore.exists(/databases/(default)/documents/admins/$(request.auth.uid));
+    }
+    function isValidImage() {
+      return request.resource.contentType.matches('image/.*') &&
+        request.resource.size < 5 * 1024 * 1024; // 5MB max
+    }
+    function isValidDocument() {
+      return (request.resource.contentType.matches('image/.*') ||
+              request.resource.contentType == 'application/pdf') &&
+        request.resource.size < 10 * 1024 * 1024; // 10MB max
+    }
+
+    // User-uploaded profile/document images — private to the owner + admins.
+    match /users/{userId}/{fileName} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow write: if isOwner(userId) && isValidDocument();
+      allow delete: if isOwner(userId) || isAdmin();
+    }
+
+    // Business logo & public branding assets — publicly readable,
+    // writable only by admins.
+    match /business/{fileName} {
+      allow read: if true;
+      allow write: if isAdmin() && isValidImage();
+    }
+
+    // Generated receipt assets (if server-rendered images are ever
+    // stored rather than generated client-side via html2canvas).
+    match /receipts/{userId}/{fileName} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow write: if false; // /api serverless functions only, if ever used
+    }
+
+    // Deny everything else by default.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

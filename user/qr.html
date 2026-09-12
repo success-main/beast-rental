@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My QR Code — Beast Rentals</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="../assets/css/style.css">
+<link rel="stylesheet" href="../assets/css/dashboard.css">
+<link rel="stylesheet" href="../assets/css/responsive.css">
+</head>
+<body>
+
+<div id="page-loader" class="page-loader">
+  <span class="brand-mark"><i class="fa-solid fa-shield-dog"></i></span>
+  <span class="spinner dark"></span>
+</div>
+
+<div class="app-shell hidden" id="app-shell">
+  <aside class="app-sidebar">
+    <a href="../index.html" class="brand"><span class="brand-mark"><i class="fa-solid fa-shield-dog"></i></span>Beast Rentals</a>
+    <a href="dashboard.html" class="side-link"><i class="fa-solid fa-gauge"></i> Dashboard</a>
+    <a href="rental.html" class="side-link"><i class="fa-solid fa-house-chimney"></i> My Rental</a>
+    <a href="payment.html" class="side-link"><i class="fa-solid fa-credit-card"></i> Make Payment</a>
+    <a href="transactions.html" class="side-link"><i class="fa-solid fa-clock-rotate-left"></i> Transactions</a>
+    <a href="receipts.html" class="side-link"><i class="fa-solid fa-receipt"></i> Receipts</a>
+    <a href="qr.html" class="side-link active"><i class="fa-solid fa-qrcode"></i> My QR Code</a>
+    <a href="notifications.html" class="side-link"><i class="fa-solid fa-bell"></i> Notifications</a>
+    <div class="side-section-label">Account</div>
+    <a href="profile.html" class="side-link"><i class="fa-solid fa-user"></i> My Profile</a>
+    <a href="#" id="logout-link" class="side-link"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+  </aside>
+
+  
+  <nav class="bottom-nav" id="bottom-nav">
+    <a href="dashboard.html" data-page="dashboard.html"><i class="fa-solid fa-gauge"></i><span>Home</span></a>
+    <a href="rental.html" data-page="rental.html"><i class="fa-solid fa-house-chimney"></i><span>Rental</span></a>
+    <a href="payment.html" data-page="payment.html" class="bn-pay"><i class="fa-solid fa-credit-card"></i><span>Pay</span></a>
+    <a href="receipts.html" data-page="receipts.html"><i class="fa-solid fa-receipt"></i><span>Receipts</span></a>
+    <a href="notifications.html" data-page="notifications.html"><i class="fa-solid fa-bell"></i><span>Alerts</span></a>
+  </nav>
+
+  <main class="app-main">
+    <div class="app-topbar">
+      <div style="display:flex; align-items:center; gap:14px;">
+        <button class="mobile-menu-btn btn-icon"><i class="fa-solid fa-bars"></i></button>
+        <span class="page-title">My QR Code</span>
+      </div>
+      <div class="topbar-actions"><div class="avatar" id="avatar-initials">--</div></div>
+    </div>
+
+    <div class="app-content" style="max-width:520px;">
+      <div class="qr-display-box" id="qr-box">
+        <div id="qr-canvas"></div>
+        <h3 style="margin-top:18px;" id="qr-serial">—</h3>
+        <div style="margin:10px 0;"><span class="badge badge-green" id="qr-status">ACTIVE</span></div>
+        <p style="font-size:0.85rem;">Expiry: <strong id="qr-expiry">—</strong></p>
+      </div>
+      <div class="receipt-actions">
+        <button class="btn btn-outline" id="download-qr-btn"><i class="fa-solid fa-download"></i> Download QR</button>
+        <button class="btn btn-outline" id="print-qr-btn"><i class="fa-solid fa-print"></i> Print QR</button>
+      </div>
+      <p style="text-align:center; font-size:0.8rem; color:var(--text-muted); margin-top:16px;">
+        This QR code encodes a secure random verification token only — no personal data. It can be scanned to confirm your rental is authentic and active.
+      </p>
+    </div>
+  </main>
+</div>
+
+<script type="module">
+  import { requireAuth, logoutUser } from "../assets/js/auth.js";
+  import { getMyQrRecord, renderQrCode } from "../assets/js/qr.js";
+  import { getMyRental, getSettings } from "../assets/js/dashboard.js";
+  import { downloadReceiptAsImage, printReceipt } from "../assets/js/receipt.js";
+
+  document.getElementById("logout-link").addEventListener("click", (e) => { e.preventDefault(); logoutUser(); });
+
+  requireAuth(async (user, profile) => {
+    document.getElementById("page-loader").classList.add("hidden");
+    document.getElementById("app-shell").classList.remove("hidden");
+    document.getElementById("avatar-initials").textContent = getInitials(profile?.name || "?");
+    document.getElementById("qr-serial").textContent = profile?.serialNumber || "—";
+
+    const [qrRecord, rental, settings] = await Promise.all([
+      getMyQrRecord(user.uid), getMyRental(user.uid), getSettings()
+    ]);
+
+    if (qrRecord?.token && qrRecord.status !== "revoked") {
+      await renderQrCode("qr-canvas", qrRecord.token);
+    } else {
+      document.getElementById("qr-canvas").innerHTML = `<p style="color:var(--text-muted); padding:30px;">Your QR code will appear here once your rental is activated.</p>`;
+    }
+
+    const statusEl = document.getElementById("qr-status");
+    if (qrRecord?.status === "revoked") {
+      statusEl.textContent = "REVOKED";
+      statusEl.className = "badge badge-red";
+    } else if (rental?.expiryDate) {
+      const status = getRentalStatus(rental.expiryDate, settings?.thresholds);
+      statusEl.textContent = status.label;
+      statusEl.className = `badge badge-${status.level === "gray" ? "yellow" : status.level}`;
+      document.getElementById("qr-expiry").textContent = formatDate(rental.expiryDate);
+    } else {
+      statusEl.textContent = "NO ACTIVE RENTAL";
+      statusEl.className = "badge badge-gray";
+    }
+
+    document.getElementById("download-qr-btn").addEventListener("click", () => downloadReceiptAsImage("qr-box", `beast-rentals-qr-${profile?.serialNumber}.png`));
+    document.getElementById("print-qr-btn").addEventListener("click", () => printReceipt("qr-box"));
+  });
+</script>
+<script src="../assets/js/utils.js"></script>
+</body>
+</html>

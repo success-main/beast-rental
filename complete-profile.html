@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Complete Your Profile — Beast Rentals</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="assets/css/style.css">
+<link rel="stylesheet" href="assets/css/auth.css">
+<link rel="stylesheet" href="assets/css/responsive.css">
+</head>
+<body>
+
+<div class="auth-shell">
+  <div class="auth-visual">
+    <div class="content">
+      <a href="index.html" class="brand" style="color:#fff;"><span class="brand-mark"><i class="fa-solid fa-shield-dog"></i></span>Beast Rentals</a>
+      <h2 style="margin-top:26px; color:#fff;">Almost there.</h2>
+      <p style="color:var(--br-gray-300); margin-top:10px;">You're signed in with Google — just a couple more details and your rental account is ready.</p>
+      <ul>
+        <li><i class="fa-solid fa-circle-check"></i> Unique serial number, generated automatically</li>
+        <li><i class="fa-solid fa-circle-check"></i> Live rental countdown</li>
+        <li><i class="fa-solid fa-circle-check"></i> Secure Paystack payments</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="auth-form-wrap">
+    <div class="auth-box">
+      <a href="index.html" class="brand"><span class="brand-mark"><i class="fa-solid fa-shield-dog"></i></span>Beast Rentals</a>
+      <h2>Complete your profile</h2>
+      <p class="sub" id="signed-in-as">Finish setting up your rental account.</p>
+
+      <div id="alert-slot"></div>
+
+      <form id="complete-form">
+        <div class="form-group">
+          <label>Type</label>
+          <div class="type-toggle">
+            <label><input type="radio" name="type" value="SHOP" checked><span><i class="fa-solid fa-store"></i> Shop</span></label>
+            <label><input type="radio" name="type" value="FARM"><span><i class="fa-solid fa-tractor"></i> Farm</span></label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="unitNumber" id="unit-label">Shop Number</label>
+          <div class="input-wrap has-icon">
+            <i class="fa-solid fa-hashtag leading"></i>
+            <input type="text" id="unitNumber" required placeholder="e.g. 24">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="phone">Phone Number</label>
+          <div class="input-wrap has-icon">
+            <i class="fa-solid fa-phone leading"></i>
+            <input type="tel" id="phone" required placeholder="+234 800 000 0000" autocomplete="tel">
+          </div>
+          <div class="field-error" id="phone-error">Enter a valid phone number.</div>
+        </div>
+
+        <div class="form-group">
+          <label>Serial Number</label>
+          <div class="serial-preview"><span>Generated automatically after this step</span><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+        </div>
+
+        <button type="submit" id="complete-btn" class="btn btn-primary btn-block">
+          <span id="complete-btn-label">Finish Setup</span>
+        </button>
+      </form>
+
+      <div class="form-footer-link"><a href="#" id="signout-link">Not you? Sign out</a></div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { watchAuthState, completeGoogleProfile, logoutUser } from "./assets/js/auth.js";
+
+  const unitLabel = document.getElementById("unit-label");
+  const unitInput = document.getElementById("unitNumber");
+
+  document.querySelectorAll('input[name="type"]').forEach(r => {
+    r.addEventListener("change", () => {
+      const isShop = document.querySelector('input[name="type"]:checked').value === "SHOP";
+      unitLabel.textContent = isShop ? "Shop Number" : "Farm Number";
+      unitInput.placeholder = isShop ? "e.g. 24" : "e.g. F-12";
+    });
+  });
+
+  function setAlert(message, type = "error") {
+    document.getElementById("alert-slot").innerHTML = message
+      ? `<div class="alert alert-${type}"><i class="fa-solid fa-circle-${type === "error" ? "exclamation" : "info"}"></i><span>${message}</span></div>`
+      : "";
+  }
+
+  // Guard: must be signed in (via Google popup on login/signup) to reach
+  // this page. If they somehow already have a full profile, skip ahead.
+  watchAuthState((user) => {
+    if (!user) {
+      window.location.href = "login.html";
+      return;
+    }
+    document.getElementById("signed-in-as").textContent = `Signed in as ${user.email}`;
+  });
+
+  document.getElementById("signout-link").addEventListener("click", (e) => {
+    e.preventDefault();
+    logoutUser();
+  });
+
+  document.getElementById("complete-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    setAlert("");
+
+    const type = document.querySelector('input[name="type"]:checked').value;
+    const unitNumber = unitInput.value.trim();
+    const phone = document.getElementById("phone").value.trim();
+
+    document.getElementById("phone-error").style.display = "none";
+    document.getElementById("phone").closest(".form-group").classList.remove("error");
+
+    if (!isValidPhone(phone)) {
+      document.getElementById("phone").closest(".form-group").classList.add("error");
+      setAlert("Please enter a valid phone number.");
+      return;
+    }
+
+    const btn = document.getElementById("complete-btn");
+    const label = document.getElementById("complete-btn-label");
+    btn.disabled = true;
+    label.innerHTML = `<span class="spinner"></span> Setting up...`;
+
+    try {
+      const { serial, alreadyExisted } = await completeGoogleProfile({ type, unitNumber, phone });
+      setAlert(alreadyExisted ? "Profile already set up. Redirecting..." : `All set! Your serial number is ${serial}. Redirecting...`, "success");
+      setTimeout(() => { window.location.href = "user/dashboard.html"; }, 1400);
+    } catch (err) {
+      console.error("Profile setup failed:", err);
+      setAlert(`Could not complete setup (${err?.code || err?.message || "unknown error"}). Please try again.`);
+      btn.disabled = false;
+      label.textContent = "Finish Setup";
+    }
+  });
+</script>
+<script src="assets/js/utils.js"></script>
+</body>
+</html>

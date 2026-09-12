@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard — Beast Rentals</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="../assets/css/style.css">
+<link rel="stylesheet" href="../assets/css/admin.css">
+<link rel="stylesheet" href="../assets/css/responsive.css">
+</head>
+<body>
+
+<div id="page-loader" class="page-loader">
+  <span class="brand-mark"><i class="fa-solid fa-shield-dog"></i></span>
+  <span class="spinner dark"></span>
+</div>
+
+<div class="app-shell hidden" id="app-shell">
+  <aside class="app-sidebar">
+    <a href="../index.html" class="brand"><span class="brand-mark"><i class="fa-solid fa-shield-dog"></i></span>Beast Rentals</a>
+    <a href="dashboard.html" class="side-link active"><i class="fa-solid fa-gauge"></i> Dashboard</a>
+    <a href="users.html" class="side-link"><i class="fa-solid fa-users"></i> Users</a>
+    <a href="shops.html" class="side-link"><i class="fa-solid fa-store"></i> Shops</a>
+    <a href="farms.html" class="side-link"><i class="fa-solid fa-tractor"></i> Farms</a>
+    <a href="rentals.html" class="side-link"><i class="fa-solid fa-house-chimney"></i> Rentals</a>
+    <a href="payments.html" class="side-link"><i class="fa-solid fa-credit-card"></i> Payments</a>
+    <a href="transactions.html" class="side-link"><i class="fa-solid fa-clock-rotate-left"></i> Transactions</a>
+    <a href="receipts.html" class="side-link"><i class="fa-solid fa-receipt"></i> Receipts</a>
+    <a href="qr-management.html" class="side-link"><i class="fa-solid fa-qrcode"></i> QR Management</a>
+    <a href="qr-scanner.html" class="side-link"><i class="fa-solid fa-camera"></i> QR Scanner</a>
+    <a href="notifications.html" class="side-link"><i class="fa-solid fa-bell"></i> Notifications</a>
+    <a href="reports.html" class="side-link"><i class="fa-solid fa-chart-line"></i> Reports</a>
+    <div class="side-section-label">System</div>
+    <a href="activity-logs.html" class="side-link"><i class="fa-solid fa-list-check"></i> Activity Logs</a>
+    <a href="administrators.html" class="side-link"><i class="fa-solid fa-user-shield"></i> Administrators</a>
+    <a href="settings.html" class="side-link"><i class="fa-solid fa-gear"></i> Settings</a>
+    <a href="#" id="logout-link" class="side-link"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+  </aside>
+
+  <main class="app-main">
+    <div class="app-topbar">
+      <div style="display:flex; align-items:center; gap:14px;">
+        <button class="mobile-menu-btn btn-icon"><i class="fa-solid fa-bars"></i></button>
+        <span class="page-title">Admin Dashboard</span>
+      </div>
+      <div class="topbar-actions">
+        <span class="role-chip" id="role-chip">—</span>
+        <div class="avatar" id="avatar-initials">--</div>
+      </div>
+    </div>
+
+    <div class="app-content">
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-top"><div class="stat-icon" style="background:var(--br-green-600);"><i class="fa-solid fa-users"></i></div></div><div class="stat-value" id="s-users">—</div><div class="stat-label">Total Users</div></div>
+        <div class="stat-card"><div class="stat-top"><div class="stat-icon" style="background:var(--br-green-500);"><i class="fa-solid fa-house-circle-check"></i></div></div><div class="stat-value" id="s-active">—</div><div class="stat-label">Active Rentals</div></div>
+        <div class="stat-card"><div class="stat-top"><div class="stat-icon" style="background:var(--br-yellow);"><i class="fa-solid fa-hourglass-half"></i></div></div><div class="stat-value" id="s-expiring">—</div><div class="stat-label">Expiring Rentals</div></div>
+        <div class="stat-card"><div class="stat-top"><div class="stat-icon" style="background:var(--br-red);"><i class="fa-solid fa-house-circle-xmark"></i></div></div><div class="stat-value" id="s-expired">—</div><div class="stat-label">Expired Rentals</div></div>
+        <div class="stat-card"><div class="stat-top"><div class="stat-icon" style="background:var(--br-black);"><i class="fa-solid fa-store"></i></div></div><div class="stat-value" id="s-shops">—</div><div class="stat-label">Total Shops</div></div>
+        <div class="stat-card"><div class="stat-top"><div class="stat-icon" style="background:var(--br-black);"><i class="fa-solid fa-tractor"></i></div></div><div class="stat-value" id="s-farms">—</div><div class="stat-label">Total Farms</div></div>
+        <div class="stat-card"><div class="stat-top"><div class="stat-icon" style="background:var(--br-green-600);"><i class="fa-solid fa-circle-check"></i></div></div><div class="stat-value" id="s-success">—</div><div class="stat-label">Successful Payments</div></div>
+        <div class="stat-card"><div class="stat-top"><div class="stat-icon" style="background:var(--br-yellow);"><i class="fa-solid fa-clock"></i></div></div><div class="stat-value" id="s-pending">—</div><div class="stat-label">Pending Payments</div></div>
+        <div class="stat-card"><div class="stat-top"><div class="stat-icon" style="background:var(--br-red);"><i class="fa-solid fa-circle-xmark"></i></div></div><div class="stat-value" id="s-failed">—</div><div class="stat-label">Failed Payments</div></div>
+        <div class="stat-card"><div class="stat-top"><div class="stat-icon" style="background:var(--br-green-500);"><i class="fa-solid fa-sack-dollar"></i></div></div><div class="stat-value" id="s-today">—</div><div class="stat-label">Today's Revenue</div></div>
+        <div class="stat-card"><div class="stat-top"><div class="stat-icon" style="background:var(--br-green-600);"><i class="fa-solid fa-money-bill-trend-up"></i></div></div><div class="stat-value" id="s-month">—</div><div class="stat-label">Monthly Revenue</div></div>
+        <div class="stat-card"><div class="stat-top"><div class="stat-icon" style="background:var(--br-black);"><i class="fa-solid fa-vault"></i></div></div><div class="stat-value" id="s-total">—</div><div class="stat-label">Total Revenue</div></div>
+      </div>
+
+      <div class="grid-2-1">
+        <div class="chart-card">
+          <div class="panel-head"><h3>Revenue — Last 14 Days</h3></div>
+          <div class="chart-bars" id="revenue-chart"></div>
+        </div>
+        <div class="chart-card">
+          <div class="panel-head"><h3>Rentals Breakdown</h3></div>
+          <div class="chart-bars" id="rentals-chart"></div>
+          <div class="chart-legend">
+            <span><span class="sw" style="background:var(--br-green-500);"></span>Active</span>
+            <span><span class="sw" style="background:var(--br-yellow);"></span>Expiring</span>
+            <span><span class="sw" style="background:var(--br-red);"></span>Expired</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><h3>Recent Activity</h3><a href="activity-logs.html" class="btn btn-sm btn-outline">View All</a></div>
+        <div id="activity-feed"><div style="text-align:center; padding:20px;"><span class="spinner dark"></span></div></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script type="module">
+  import { requireAdmin, logoutUser } from "../assets/js/auth.js";
+  import { getDashboardStats, getRevenueSeries, listActivityLogs, checkAndSendExpiryReminders } from "../assets/js/admin.js";
+
+  document.getElementById("logout-link").addEventListener("click", (e) => { e.preventDefault(); logoutUser(); });
+
+  requireAdmin(async (user, adminData) => {
+    document.getElementById("page-loader").classList.add("hidden");
+    document.getElementById("app-shell").classList.remove("hidden");
+    document.getElementById("avatar-initials").textContent = getInitials(adminData?.name || user.email);
+    document.getElementById("role-chip").textContent = (adminData?.role || "ADMIN").replace("_", " ").toUpperCase();
+
+    // Best-effort expiry reminders — see the doc comment on this
+    // function; there's no server to run a real daily cron on, so
+    // this runs (throttled to once/day) whenever an admin opens this
+    // dashboard instead. Fire-and-forget: never block the page on it.
+    checkAndSendExpiryReminders().catch(err => console.warn("Expiry reminder check failed:", err));
+
+    const stats = await getDashboardStats();
+    document.getElementById("s-users").textContent = stats.totalUsers;
+    document.getElementById("s-active").textContent = stats.activeRentals;
+    document.getElementById("s-expiring").textContent = stats.expiringRentals;
+    document.getElementById("s-expired").textContent = stats.expiredRentals;
+    document.getElementById("s-shops").textContent = stats.totalShops;
+    document.getElementById("s-farms").textContent = stats.totalFarms;
+    document.getElementById("s-success").textContent = stats.successfulPayments;
+    document.getElementById("s-pending").textContent = stats.pendingPayments;
+    document.getElementById("s-failed").textContent = stats.failedPayments;
+    document.getElementById("s-today").textContent = formatCurrency(stats.todayRevenue);
+    document.getElementById("s-month").textContent = formatCurrency(stats.monthRevenue);
+    document.getElementById("s-total").textContent = formatCurrency(stats.totalRevenue);
+
+    // Rentals breakdown mini-chart
+    const rMax = Math.max(stats.activeRentals, stats.expiringRentals, stats.expiredRentals, 1);
+    document.getElementById("rentals-chart").innerHTML = `
+      <div class="bar-col"><div class="bar" style="height:${(stats.activeRentals / rMax) * 100}%; background:linear-gradient(180deg,var(--br-green-300),var(--br-green-600));"></div><div class="bar-label">Active</div></div>
+      <div class="bar-col"><div class="bar" style="height:${(stats.expiringRentals / rMax) * 100}%; background:linear-gradient(180deg,#ffe27a,var(--br-yellow));"></div><div class="bar-label">Expiring</div></div>
+      <div class="bar-col"><div class="bar" style="height:${(stats.expiredRentals / rMax) * 100}%; background:linear-gradient(180deg,#f28b83,var(--br-red));"></div><div class="bar-label">Expired</div></div>
+    `;
+
+    // Revenue chart
+    const series = await getRevenueSeries(14);
+    const max = Math.max(...series.map(s => s.amount), 1);
+    document.getElementById("revenue-chart").innerHTML = series.map(s => `
+      <div class="bar-col">
+        <div class="bar" style="height:${(s.amount / max) * 100}%;" title="${formatCurrency(s.amount)}"></div>
+        <div class="bar-label">${s.date.slice(5)}</div>
+      </div>
+    `).join("");
+
+    // Activity feed
+    const logs = await listActivityLogs(8);
+    document.getElementById("activity-feed").innerHTML = logs.length
+      ? logs.map(l => `<div class="activity-feed-item"><span class="a-dot"></span><div><div>${l.action}</div><div class="a-time">${timeAgo(l.createdAt)}</div></div></div>`).join("")
+      : `<p style="color:var(--text-muted); font-size:0.88rem;">No activity recorded yet.</p>`;
+  });
+</script>
+<script src="../assets/js/utils.js"></script>
+</body>
+</html>

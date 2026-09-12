@@ -1,0 +1,11 @@
+{
+  "name": "beast-rentals-setup-scripts",
+  "private": true,
+  "description": "One-time admin setup utilities. Not part of the deployed app.",
+  "scripts": {
+    "create-admin": "node create-first-admin.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.1.0"
+  }
+}

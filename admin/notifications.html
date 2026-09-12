@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Notifications — Beast Rentals Admin</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="../assets/css/style.css">
+<link rel="stylesheet" href="../assets/css/admin.css">
+<link rel="stylesheet" href="../assets/css/responsive.css">
+</head>
+<body>
+
+<div id="page-loader" class="page-loader"><span class="brand-mark"><i class="fa-solid fa-shield-dog"></i></span><span class="spinner dark"></span></div>
+
+<div class="app-shell hidden" id="app-shell">
+  <aside class="app-sidebar">
+    <a href="../index.html" class="brand"><span class="brand-mark"><i class="fa-solid fa-shield-dog"></i></span>Beast Rentals</a>
+    <a href="dashboard.html" class="side-link"><i class="fa-solid fa-gauge"></i> Dashboard</a>
+    <a href="users.html" class="side-link"><i class="fa-solid fa-users"></i> Users</a>
+    <a href="shops.html" class="side-link"><i class="fa-solid fa-store"></i> Shops</a>
+    <a href="farms.html" class="side-link"><i class="fa-solid fa-tractor"></i> Farms</a>
+    <a href="rentals.html" class="side-link"><i class="fa-solid fa-house-chimney"></i> Rentals</a>
+    <a href="payments.html" class="side-link"><i class="fa-solid fa-credit-card"></i> Payments</a>
+    <a href="transactions.html" class="side-link"><i class="fa-solid fa-clock-rotate-left"></i> Transactions</a>
+    <a href="receipts.html" class="side-link"><i class="fa-solid fa-receipt"></i> Receipts</a>
+    <a href="qr-management.html" class="side-link"><i class="fa-solid fa-qrcode"></i> QR Management</a>
+    <a href="qr-scanner.html" class="side-link"><i class="fa-solid fa-camera"></i> QR Scanner</a>
+    <a href="notifications.html" class="side-link active"><i class="fa-solid fa-bell"></i> Notifications</a>
+    <a href="reports.html" class="side-link"><i class="fa-solid fa-chart-line"></i> Reports</a>
+    <div class="side-section-label">System</div>
+    <a href="activity-logs.html" class="side-link"><i class="fa-solid fa-list-check"></i> Activity Logs</a>
+    <a href="administrators.html" class="side-link"><i class="fa-solid fa-user-shield"></i> Administrators</a>
+    <a href="settings.html" class="side-link"><i class="fa-solid fa-gear"></i> Settings</a>
+    <a href="#" id="logout-link" class="side-link"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+  </aside>
+
+  <main class="app-main">
+    <div class="app-topbar">
+      <div style="display:flex; align-items:center; gap:14px;"><button class="mobile-menu-btn btn-icon"><i class="fa-solid fa-bars"></i></button><span class="page-title">Notifications</span></div>
+      <div class="topbar-actions"><div class="avatar" id="avatar-initials">--</div></div>
+    </div>
+
+    <div class="app-content" style="max-width:620px;">
+      <div id="alert-slot"></div>
+      <div class="panel">
+        <div class="panel-head"><h3>Send Notification</h3></div>
+        <form id="notif-form">
+          <div class="form-group">
+            <label>Audience</label>
+            <div class="input-wrap">
+              <select id="audience">
+                <option value="individual">Individual User (by Serial Number)</option>
+                <option value="all">All Users</option>
+                <option value="shop">Shop Users</option>
+                <option value="farm">Farm Users</option>
+                <option value="expiring">Expiring Users</option>
+                <option value="expired">Expired Users</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group" id="serial-field">
+            <label>Serial Number</label>
+            <div class="input-wrap"><input type="text" id="target-serial" placeholder="BR-000245"></div>
+          </div>
+          <div class="form-group">
+            <label>Title</label>
+            <div class="input-wrap"><input type="text" id="title" required placeholder="e.g. Scheduled Maintenance"></div>
+          </div>
+          <div class="form-group">
+            <label>Message</label>
+            <div class="input-wrap"><textarea id="message" rows="4" required style="width:100%; padding:13px 14px; border-radius:8px; border:1.5px solid var(--border-subtle);" placeholder="Write the notification message..."></textarea></div>
+          </div>
+          <button type="submit" class="btn btn-primary" id="send-btn"><i class="fa-solid fa-paper-plane"></i> Send Notification</button>
+        </form>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script type="module">
+  import { requireAdmin, logoutUser } from "../assets/js/auth.js";
+  import { sendNotification } from "../assets/js/admin.js";
+
+  document.getElementById("logout-link").addEventListener("click", (e) => { e.preventDefault(); logoutUser(); });
+
+  requireAdmin((user, adminData) => {
+    document.getElementById("page-loader").classList.add("hidden");
+    document.getElementById("app-shell").classList.remove("hidden");
+    document.getElementById("avatar-initials").textContent = getInitials(adminData?.name || user.email);
+  });
+
+  document.getElementById("audience").addEventListener("change", (e) => {
+    document.getElementById("serial-field").style.display = e.target.value === "individual" ? "block" : "none";
+  });
+
+  function setAlert(message, type = "success") {
+    document.getElementById("alert-slot").innerHTML = message
+      ? `<div class="alert alert-${type}"><i class="fa-solid fa-circle-${type === "error" ? "exclamation" : "check"}"></i><span>${message}</span></div>` : "";
+  }
+
+  document.getElementById("notif-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById("send-btn");
+    btn.disabled = true;
+    const audience = document.getElementById("audience").value;
+    const title = document.getElementById("title").value.trim();
+    const message = document.getElementById("message").value.trim();
+    const serial = document.getElementById("target-serial").value.trim();
+
+    try {
+      await sendNotification({ audience, userId: audience === "individual" ? serial : null, title, message });
+      setAlert("Notification sent successfully.", "success");
+      e.target.reset();
+    } catch {
+      setAlert("Could not send notification.", "error");
+    } finally {
+      btn.disabled = false;
+    }
+  });
+</script>
+<script src="../assets/js/utils.js"></script>
+</body>
+</html>

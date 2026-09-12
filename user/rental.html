@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Rental — Beast Rentals</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="../assets/css/style.css">
+<link rel="stylesheet" href="../assets/css/dashboard.css">
+<link rel="stylesheet" href="../assets/css/responsive.css">
+</head>
+<body>
+
+<div id="page-loader" class="page-loader">
+  <span class="brand-mark"><i class="fa-solid fa-shield-dog"></i></span>
+  <span class="spinner dark"></span>
+</div>
+
+<div class="app-shell hidden" id="app-shell">
+  <aside class="app-sidebar">
+    <a href="../index.html" class="brand"><span class="brand-mark"><i class="fa-solid fa-shield-dog"></i></span>Beast Rentals</a>
+    <a href="dashboard.html" class="side-link"><i class="fa-solid fa-gauge"></i> Dashboard</a>
+    <a href="rental.html" class="side-link active"><i class="fa-solid fa-house-chimney"></i> My Rental</a>
+    <a href="payment.html" class="side-link"><i class="fa-solid fa-credit-card"></i> Make Payment</a>
+    <a href="transactions.html" class="side-link"><i class="fa-solid fa-clock-rotate-left"></i> Transactions</a>
+    <a href="receipts.html" class="side-link"><i class="fa-solid fa-receipt"></i> Receipts</a>
+    <a href="qr.html" class="side-link"><i class="fa-solid fa-qrcode"></i> My QR Code</a>
+    <a href="notifications.html" class="side-link"><i class="fa-solid fa-bell"></i> Notifications</a>
+    <div class="side-section-label">Account</div>
+    <a href="profile.html" class="side-link"><i class="fa-solid fa-user"></i> My Profile</a>
+    <a href="#" id="logout-link" class="side-link"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+  </aside>
+
+  
+  <nav class="bottom-nav" id="bottom-nav">
+    <a href="dashboard.html" data-page="dashboard.html"><i class="fa-solid fa-gauge"></i><span>Home</span></a>
+    <a href="rental.html" data-page="rental.html"><i class="fa-solid fa-house-chimney"></i><span>Rental</span></a>
+    <a href="payment.html" data-page="payment.html" class="bn-pay"><i class="fa-solid fa-credit-card"></i><span>Pay</span></a>
+    <a href="receipts.html" data-page="receipts.html"><i class="fa-solid fa-receipt"></i><span>Receipts</span></a>
+    <a href="notifications.html" data-page="notifications.html"><i class="fa-solid fa-bell"></i><span>Alerts</span></a>
+  </nav>
+
+  <main class="app-main">
+    <div class="app-topbar">
+      <div style="display:flex; align-items:center; gap:14px;">
+        <button class="mobile-menu-btn btn-icon"><i class="fa-solid fa-bars"></i></button>
+        <span class="page-title">My Rental</span>
+      </div>
+      <div class="topbar-actions"><div class="avatar" id="avatar-initials">--</div></div>
+    </div>
+
+    <div class="app-content">
+      <div class="rental-status-card" id="rental-card">
+        <div class="rs-top">
+          <div>
+            <div style="font-size:0.8rem; color:var(--br-gray-300); text-transform:uppercase; letter-spacing:.05em;">Rental Status</div>
+            <div style="font-size:1.4rem; font-weight:800; margin-top:4px;" id="rs-label">Loading...</div>
+          </div>
+          <span class="badge badge-dark" id="rs-type-badge">—</span>
+        </div>
+        <div class="countdown-grid" id="countdown-grid">
+          <div class="countdown-cell"><div class="num" id="cd-days">--</div><div class="lbl">Days</div></div>
+          <div class="countdown-cell"><div class="num" id="cd-hours">--</div><div class="lbl">Hours</div></div>
+          <div class="countdown-cell"><div class="num" id="cd-minutes">--</div><div class="lbl">Minutes</div></div>
+          <div class="countdown-cell"><div class="num" id="cd-seconds">--</div><div class="lbl">Seconds</div></div>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:22px;">
+        <div class="panel-head"><h3>Rental Details</h3></div>
+        <div class="info-grid">
+          <div class="info-tile"><div class="lbl">Serial Number</div><div class="val" id="d-serial">—</div></div>
+          <div class="info-tile"><div class="lbl">Type</div><div class="val" id="d-type">—</div></div>
+          <div class="info-tile"><div class="lbl">Unit Number</div><div class="val" id="d-unit">—</div></div>
+          <div class="info-tile"><div class="lbl">Start Date</div><div class="val" id="d-start">—</div></div>
+          <div class="info-tile"><div class="lbl">Expiry Date</div><div class="val" id="d-expiry">—</div></div>
+          <div class="info-tile"><div class="lbl">Status</div><div class="val" id="d-status">—</div></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><h3>Renewal Timeline</h3></div>
+        <div class="timeline" id="timeline">
+          <div class="timeline-item"><strong>60 days before expiry</strong><p style="font-size:0.85rem;">You'll receive a reminder notification.</p></div>
+          <div class="timeline-item"><strong>30 days before expiry</strong><p style="font-size:0.85rem;">Your dashboard status turns yellow — renew soon.</p></div>
+          <div class="timeline-item"><strong>7 days before expiry</strong><p style="font-size:0.85rem;">Final reminder — status turns red.</p></div>
+          <div class="timeline-item"><strong>Expiry date</strong><p style="font-size:0.85rem;">Rental marked expired until renewed.</p></div>
+        </div>
+        <a href="payment.html" class="btn btn-primary" style="margin-top:10px;"><i class="fa-solid fa-credit-card"></i> Renew Now</a>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script type="module">
+  import { requireAuth, logoutUser } from "../assets/js/auth.js";
+  import { getSettings, watchMyRental, mountCountdown } from "../assets/js/dashboard.js";
+
+  document.getElementById("logout-link").addEventListener("click", (e) => { e.preventDefault(); logoutUser(); });
+  let stopCountdown = null;
+
+  requireAuth(async (user, profile) => {
+    document.getElementById("page-loader").classList.add("hidden");
+    document.getElementById("app-shell").classList.remove("hidden");
+    document.getElementById("avatar-initials").textContent = getInitials(profile?.name || "?");
+    document.getElementById("d-serial").textContent = profile?.serialNumber || "—";
+    document.getElementById("d-type").textContent = profile?.type || "—";
+    document.getElementById("d-unit").textContent = profile?.unitNumber || "—";
+    document.getElementById("rs-type-badge").textContent = profile?.type || "—";
+
+    const settings = await getSettings();
+    const thresholds = settings?.thresholds || { greenMinDays: 60, yellowMinDays: 30 };
+
+    watchMyRental(user.uid, (rental) => {
+      if (stopCountdown) { stopCountdown(); stopCountdown = null; }
+      const card = document.getElementById("rental-card");
+
+      if (!rental || !rental.expiryDate) {
+        document.getElementById("rs-label").textContent = "NO ACTIVE RENTAL";
+        card.className = "rental-status-card status-red";
+        document.getElementById("countdown-grid").classList.add("hidden");
+        document.getElementById("d-status").innerHTML = `<span class="badge badge-red">PAYMENT REQUIRED</span>`;
+        return;
+      }
+
+      document.getElementById("countdown-grid").classList.remove("hidden");
+      const status = getRentalStatus(rental.expiryDate, thresholds);
+      document.getElementById("rs-label").textContent = status.label;
+      card.className = `rental-status-card status-${status.level === "gray" ? "yellow" : status.level}`;
+      document.getElementById("d-start").textContent = formatDate(rental.startDate);
+      document.getElementById("d-expiry").textContent = formatDate(rental.expiryDate);
+
+      const badgeClass = status.level === "green" ? "badge-green" : status.level === "yellow" ? "badge-yellow" : "badge-red";
+      document.getElementById("d-status").innerHTML = `<span class="badge ${badgeClass}"><span class="dot dot-${status.level === "gray" ? "yellow" : status.level}"></span>${status.label}</span>`;
+
+      stopCountdown = mountCountdown({
+        expiryDate: rental.expiryDate,
+        els: {
+          days: document.getElementById("cd-days"),
+          hours: document.getElementById("cd-hours"),
+          minutes: document.getElementById("cd-minutes"),
+          seconds: document.getElementById("cd-seconds"),
+        }
+      });
+    });
+  });
+</script>
+<script src="../assets/js/utils.js"></script>
+</body>
+</html>

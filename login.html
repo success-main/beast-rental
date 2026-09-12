@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login — Beast Rentals</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="assets/css/style.css">
+<link rel="stylesheet" href="assets/css/auth.css">
+<link rel="stylesheet" href="assets/css/responsive.css">
+</head>
+<body>
+
+<div class="auth-shell">
+  <div class="auth-visual">
+    <div class="content">
+      <a href="index.html" class="brand" style="color:#fff;"><span class="brand-mark"><i class="fa-solid fa-shield-dog"></i></span>Beast Rentals</a>
+      <h2 style="margin-top:26px; color:#fff;">Welcome back.</h2>
+      <p style="color:var(--br-gray-300); margin-top:10px;">Sign in to check your rental status, make payments, and download your receipts.</p>
+      <ul>
+        <li><i class="fa-solid fa-circle-check"></i> Live rental countdown</li>
+        <li><i class="fa-solid fa-circle-check"></i> Secure Paystack payments</li>
+        <li><i class="fa-solid fa-circle-check"></i> Verified digital receipts</li>
+        <li><i class="fa-solid fa-circle-check"></i> QR-based rental verification</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="auth-form-wrap">
+    <div class="auth-box">
+      <a href="index.html" class="brand"><span class="brand-mark"><i class="fa-solid fa-shield-dog"></i></span>Beast Rentals</a>
+      <h2>Sign in to your account</h2>
+      <p class="sub">Enter your details to continue.</p>
+
+      <div id="alert-slot"></div>
+
+      <form id="login-form">
+        <div class="form-group">
+          <label for="email">Email Address</label>
+          <div class="input-wrap has-icon">
+            <i class="fa-solid fa-envelope leading"></i>
+            <input type="email" id="email" required placeholder="you@example.com" autocomplete="email">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="password">Password</label>
+          <div class="input-wrap has-icon">
+            <i class="fa-solid fa-lock leading"></i>
+            <input type="password" id="password" required placeholder="••••••••" autocomplete="current-password">
+            <button type="button" class="toggle-pass" data-target="password"><i class="fa-solid fa-eye"></i></button>
+          </div>
+        </div>
+        <div style="display:flex; justify-content:flex-end; margin-bottom:20px;">
+          <a href="#" id="forgot-link" style="font-size:0.85rem; color:var(--br-green-600); font-weight:700;">Forgot password?</a>
+        </div>
+        <button type="submit" id="login-btn" class="btn btn-primary btn-block">
+          <span id="login-btn-label">Sign In</span>
+        </button>
+      </form>
+
+      <div class="divider-or">or</div>
+
+      <button type="button" id="google-btn" class="btn-google">
+        <svg class="google-g" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+          <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12s5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/>
+          <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/>
+          <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/>
+          <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/>
+        </svg>
+        <span id="google-btn-label">Continue with Google</span>
+      </button>
+
+      <div class="form-footer-link">Don't have an account? <a href="signup.html">Register Now</a></div>
+
+      <div class="divider"></div>
+      <div class="form-footer-link">
+        <a href="admin/login.html" style="color:var(--text-muted);"><i class="fa-solid fa-user-shield"></i> Administrator Login</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { loginUser, resetPassword, watchAuthState, signInWithGoogle } from "./assets/js/auth.js";
+  import { auth, db } from "./assets/js/firebase-config.js";
+  import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const form = document.getElementById("login-form");
+  const alertSlot = document.getElementById("alert-slot");
+  const btn = document.getElementById("login-btn");
+  const btnLabel = document.getElementById("login-btn-label");
+
+  document.querySelectorAll(".toggle-pass").forEach(btnEl => {
+    btnEl.addEventListener("click", () => {
+      const target = document.getElementById(btnEl.dataset.target);
+      const show = target.type === "password";
+      target.type = show ? "text" : "password";
+      btnEl.querySelector("i").className = show ? "fa-solid fa-eye-slash" : "fa-solid fa-eye";
+    });
+  });
+
+  function setAlert(message, type = "error") {
+    alertSlot.innerHTML = message
+      ? `<div class="alert alert-${type}"><i class="fa-solid fa-circle-${type === "error" ? "exclamation" : "info"}"></i><span>${message}</span></div>`
+      : "";
+  }
+
+  function friendlyAuthError(err) {
+    const code = err?.code || "";
+    const map = {
+      "auth/invalid-credential": "Invalid login details.",
+      "auth/wrong-password": "Invalid login details.",
+      "auth/user-not-found": "Invalid login details.",
+      "auth/too-many-requests": "Too many attempts. Please try again later.",
+      "auth/user-disabled": "This account has been suspended. Contact support.",
+    };
+    if (map[code]) return map[code];
+    const detail = code || err?.message || "unknown error";
+    return `Something went wrong (${detail}). Please try again.`;
+  }
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    setAlert("");
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+
+    btn.disabled = true;
+    btnLabel.innerHTML = `<span class="spinner"></span> Signing in...`;
+
+    try {
+      const user = await loginUser(email, password);
+      // Route based on whether this uid has an admin record.
+      const adminSnap = await getDoc(doc(db, "admins", user.uid));
+      window.location.href = adminSnap.exists() ? "admin/dashboard.html" : "user/dashboard.html";
+    } catch (err) {
+      console.error("Login failed:", err);
+      setAlert(friendlyAuthError(err));
+      btn.disabled = false;
+      btnLabel.textContent = "Sign In";
+    }
+  });
+
+  document.getElementById("forgot-link").addEventListener("click", async (e) => {
+    e.preventDefault();
+    const email = document.getElementById("email").value.trim();
+    if (!email) { setAlert("Enter your email above first, then click 'Forgot password?' again."); return; }
+    try {
+      await resetPassword(email);
+      setAlert("Password reset email sent. Check your inbox.", "success");
+    } catch (err) {
+      setAlert(friendlyAuthError(err));
+    }
+  });
+
+  document.getElementById("google-btn").addEventListener("click", async () => {
+    setAlert("");
+    const btn = document.getElementById("google-btn");
+    const label = document.getElementById("google-btn-label");
+    btn.disabled = true;
+    label.textContent = "Signing in...";
+
+    try {
+      const { isNewUser } = await signInWithGoogle();
+      if (isNewUser) {
+        // Google doesn't give us Type/Unit Number/Phone — finish
+        // registration on a short follow-up step.
+        window.location.href = "complete-profile.html";
+        return;
+      }
+      const adminSnap = await getDoc(doc(db, "admins", auth.currentUser.uid));
+      window.location.href = adminSnap.exists() ? "admin/dashboard.html" : "user/dashboard.html";
+    } catch (err) {
+      if (err.code === "auth/popup-closed-by-user") {
+        setAlert("");
+      } else {
+        setAlert("Could not sign in with Google. Please try again.");
+      }
+      btn.disabled = false;
+      label.textContent = "Continue with Google";
+    }
+  });
+
+  // If already logged in, skip straight to dashboard.
+  watchAuthState(async (user) => {
+    if (user) {
+      const adminSnap = await getDoc(doc(db, "admins", user.uid));
+      window.location.href = adminSnap.exists() ? "admin/dashboard.html" : "user/dashboard.html";
+    }
+  });
+</script>
+<script src="assets/js/utils.js"></script>
+</body>
+</html>
