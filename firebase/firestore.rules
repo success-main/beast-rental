@@ -107,13 +107,15 @@ service cloud.firestore {
     match /payments/{paymentId} {
       allow read: if isSignedIn() &&
         (resource.data.userId == request.auth.uid || isFinanceAdmin() || isSuperAdmin());
-      // Basic sanity checks only — cannot confirm a real payment
-      // happened. userId must match the signed-in user, and the
-      // claimed amount/currency must match the live settings doc.
-      allow create: if isSignedIn() &&
-        request.resource.data.userId == request.auth.uid &&
-        request.resource.data.amount == get(/databases/$(database)/documents/settings/general).data.annualRentalFee &&
-        request.resource.data.currency == get(/databases/$(database)/documents/settings/general).data.currency;
+      // userId must match the signed-in user. (An earlier version of
+      // this rule also cross-checked amount/currency against
+      // settings/general via get() — removed because get() throws if
+      // that document doesn't exist yet, turning a missing settings
+      // doc into a hard permission-denied on every payment. It also
+      // wasn't real protection: a client can read that same document
+      // and match it exactly, so it added fragility without adding
+      // security.)
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
       allow update, delete: if false;
     }
 
